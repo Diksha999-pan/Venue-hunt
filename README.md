@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Venue Hunt
 
 Venue Hunt is a comprehensive venue recommendation and booking system built with Django. The platform connects event organizers with venue owners, making it easy to find and book venues for various events.
@@ -16,17 +17,19 @@ Venue Hunt is a comprehensive venue recommendation and booking system built with
 - Upload venue photos
 - Handle booking requests
 - Track venue performance and reviews
+- Analytics dashboard with booking statistics
 
 ## Technical Stack
 - Backend: Django
-- Frontend: HTML, CSS
+- Frontend: HTML, CSS, JavaScript
+- Data Visualization: Chart.js
 - Database: SQLite (development)
 
 ## Setup
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/Ashlazynothing5526/Venue-hunt.git
 cd venuehunt
 ```
 
@@ -65,6 +68,7 @@ venuehunt/
 ├── accounts/         # User authentication and profiles
 ├── venues/          # Venue management
 ├── bookings/        # Booking system
+├── reviews/         # Review system
 ├── static/          # Static files (CSS, JS, images)
 ├── templates/       # HTML templates
 └── venuehunt/      # Project settings
@@ -72,3 +76,7 @@ venuehunt/
 
 ## License
 [MIT License](LICENSE)
+=======
+# Venue-hunt
+Venue Recommendation system
+>>>>>>> c782e193158ae3f1b43a67220e94a3e73f92c700
