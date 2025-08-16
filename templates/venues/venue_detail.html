@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ venue.name }} - Venue Hunt{% endblock %}
+
+{% block extra_css %}
+<style>
+    #venue-map {
+        height: 300px;
+        width: 100%;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                {% if venue.images.exists %}
+                    <div id="venueImageCarousel" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            {% for image in venue.images.all %}
+                                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                    <img src="{{ image.image.url }}" class="d-block w-100" alt="{{ venue.name }}" style="height: 400px; object-fit: cover;">
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% if venue.images.count > 1 %}
+                            <button class="carousel-control-prev" type="button" data-bs-target="#venueImageCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#venueImageCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </button>
+                            <div class="carousel-indicators">
+                                {% for image in venue.images.all %}
+                                    <button type="button" data-bs-target="#venueImageCarousel" data-bs-slide-to="{{ forloop.counter0 }}" 
+                                            {% if forloop.first %}class="active" aria-current="true"{% endif %}
+                                            aria-label="Slide {{ forloop.counter }}"></button>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <!-- Thumbnail Navigation -->
+                    {% if venue.images.count > 1 %}
+                        <div class="row mt-2 px-2">
+                            {% for image in venue.images.all %}
+                                <div class="col-3 mb-2">
+                                    <img src="{{ image.image.url }}" 
+                                         class="img-thumbnail" 
+                                         alt="Thumbnail"
+                                         style="cursor: pointer; height: 80px; object-fit: cover;"
+                                         onclick="document.querySelector('#venueImageCarousel').querySelector('.carousel-item:nth-child({{ forloop.counter }})').click()">
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endif %}
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h1 class="card-title mb-0">{{ venue.name }}</h1>
+                        {% if venue_rating %}
+                        <div class="venue-rating-badge">
+                            <span class="badge bg-success p-2">
+                                {{ venue_rating.average|floatformat:1 }} <i class="fas fa-star text-warning"></i>
+                                <small>({{ venue_rating.count }})</small>
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <p class="lead">{{ venue.description }}</p>
+                    
+                    <h4 class="mt-4">Details</h4>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <strong>Capacity:</strong> {{ venue.capacity }} people
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Price:</strong> ₹{{ venue.price_per_hour }}/hour
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Address:</strong> {{ venue.address }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Event Type:</strong> {{ venue.get_supported_events_display }}
+                        </li>
+                    </ul>
+
+                    <h4 class="mt-4">Amenities</h4>
+                    <div class="row mt-3">
+                        {% if venue.has_parking %}
+                            <div class="col-md-3 mb-2">
+                                <i class="fas fa-parking"></i> Parking
+                            </div>
+                        {% endif %}
+                        {% if venue.has_wifi %}
+                            <div class="col-md-3 mb-2">
+                                <i class="fas fa-wifi"></i> Wi-Fi
+                            </div>
+                        {% endif %}
+                        {% if venue.has_sound_system %}
+                            <div class="col-md-3 mb-2">
+                                <i class="fas fa-music"></i> Sound System
+                            </div>
+                        {% endif %}
+                        {% if venue.has_catering %}
+                            <div class="col-md-3 mb-2">
+                                <i class="fas fa-utensils"></i> Catering
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reviews Section -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h4 class="d-flex align-items-center mb-4">
+                        Reviews
+                        {% if venue_rating %}
+                        <div class="ms-3">
+                            <span class="badge bg-success">{{ venue_rating.average|floatformat:1 }} <i class="fas fa-star text-warning"></i></span>
+                            <span class="text-muted small">({{ venue_rating.count }} review{{ venue_rating.count|pluralize }})</span>
+                        </div>
+                        {% endif %}
+                    </h4>
+                    
+                    {% if venue_reviews %}
+                        {% for review in venue_reviews %}
+                            <div class="review-item border-bottom mb-3 pb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ review.reviewer.profile_picture.url }}" alt="{{ review.reviewer.get_full_name }}" 
+                                             class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                        <h6 class="mb-0">{{ review.reviewer.get_full_name }}</h6>
+                                    </div>
+                                    <small class="text-muted">{{ review.created_at|date:"F d, Y" }}</small>
+                                </div>
+                                <div class="stars my-2">
+                                    {% for i in '12345'|make_list %}
+                                        {% if forloop.counter <= review.rating %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-muted"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <p class="mb-0">{{ review.comment }}</p>
+                            </div>
+                        {% endfor %}
+                        
+                        {% if page_obj.paginator.num_pages > 1 %}
+                        <nav aria-label="Review pagination">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1">&laquo; First</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                                </li>
+                                {% endif %}
+                                
+                                <li class="page-item disabled">
+                                    <span class="page-link">
+                                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                                    </span>
+                                </li>
+                                
+                                {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-star-half-alt fa-3x text-muted mb-3"></i>
+                            <p class="lead">No reviews yet for this venue.</p>
+                            {% if user.is_authenticated and user.user_type == 'organizer' %}
+                                <p class="text-muted">Book this venue and be the first to leave a review!</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h4>Book this Venue</h4>
+                    {% if user.is_authenticated and user.user_type == 'organizer' %}
+                        <a href="{% url 'bookings:create_booking' venue.pk %}" class="btn btn-primary btn-lg w-100">Book Now</a>
+                    {% elif user.is_authenticated %}
+                        <div class="alert alert-info">
+                            Only event organizers can book venues.
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            Please <a href="{% url 'login' %}">login</a> as an event organizer to book this venue.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Map Section -->
+            {% if venue.latitude and venue.longitude %}
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h4>Location</h4>
+                    <div id="venue-map"></div>
+                    <a href="https://www.google.com/maps/search/?api=1&query={{ venue.latitude }},{{ venue.longitude }}" 
+                       class="btn btn-outline-primary btn-sm mt-2" target="_blank">
+                        <i class="fas fa-directions"></i> Get Directions
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Google Maps JavaScript -->
+{% if venue.latitude and venue.longitude %}
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap" async defer></script>
+<script>
+    function initMap() {
+        const venueLocation = {
+            lat: {{ venue.latitude|stringformat:"f" }},
+            lng: {{ venue.longitude|stringformat:"f" }}
+        };
+        
+        const map = new google.maps.Map(document.getElementById("venue-map"), {
+            center: venueLocation,
+            zoom: 15,
+        });
+        
+        // Add a marker for the venue location
+        const marker = new google.maps.Marker({
+            position: venueLocation,
+            map: map,
+            title: "{{ venue.name }}"
+        });
+    }
+</script>
+{% endif %}
+{% endblock %}

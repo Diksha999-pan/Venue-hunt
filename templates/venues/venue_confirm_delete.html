@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Venue - Venue Hunt{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Delete Venue</h3>
+                </div>
+                <div class="card-body">
+                    <p class="mb-4">Are you sure you want to delete "{{ object.name }}"? This action cannot be undone.</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'venues:vendor_dashboard' %}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-danger">Delete Venue</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

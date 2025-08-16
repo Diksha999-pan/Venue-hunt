@@ -1,0 +1,342 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Edit{% else %}Add{% endif %} Venue - Venue Hunt{% endblock %}
+
+{% block extra_css %}
+<style>
+    #map {
+        height: 400px;
+        width: 100%;
+        margin-bottom: 20px;
+        border-radius: 4px;
+    }
+    .location-btn {
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">{% if form.instance.pk %}Edit{% else %}Add New{% endif %} Venue</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.name.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.supported_events.id_for_label }}" class="form-label">{{ form.supported_events.label }}</label>
+                                    {{ form.supported_events }}
+                                    {% if form.supported_events.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.supported_events.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.description.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.capacity.id_for_label }}" class="form-label">{{ form.capacity.label }}</label>
+                                    {{ form.capacity }}
+                                    {% if form.capacity.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.capacity.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.price_per_hour.id_for_label }}" class="form-label">{{ form.price_per_hour.label }}</label>
+                                    {{ form.price_per_hour }}
+                                    {% if form.price_per_hour.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.price_per_hour.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Location Section -->
+                        <h5 class="mb-3 mt-4">Venue Location</h5>
+                        <div class="mb-3">
+                            <label for="{{ form.address.id_for_label }}" class="form-label">{{ form.address.label }}</label>
+                            {{ form.address }}
+                            {% if form.address.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.address.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Hidden fields for coordinates -->
+                        {{ form.latitude }}
+                        {{ form.longitude }}
+
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <button type="button" id="geocode-btn" class="btn btn-outline-primary me-2 location-btn">
+                                    <i class="fas fa-search-location"></i> Find on Map
+                                </button>
+                                <button type="button" id="current-location-btn" class="btn btn-outline-info location-btn">
+                                    <i class="fas fa-map-marker-alt"></i> Use My Current Location
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Map Container -->
+                        <div id="map"></div>
+
+                        <!-- Amenities Section -->
+                        <h5 class="mb-3 mt-4">Amenities</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    {{ form.has_parking }}
+                                    <label class="form-check-label" for="{{ form.has_parking.id_for_label }}">
+                                        {{ form.has_parking.label }}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    {{ form.has_wifi }}
+                                    <label class="form-check-label" for="{{ form.has_wifi.id_for_label }}">
+                                        {{ form.has_wifi.label }}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    {{ form.has_sound_system }}
+                                    <label class="form-check-label" for="{{ form.has_sound_system.id_for_label }}">
+                                        {{ form.has_sound_system.label }}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    {{ form.has_catering }}
+                                    <label class="form-check-label" for="{{ form.has_catering.id_for_label }}">
+                                        {{ form.has_catering.label }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Image Upload Section -->
+                        <h5 class="mb-3 mt-4">Venue Images</h5>
+                        <div class="mb-3">
+                            <input type="file" name="venue_images" multiple class="form-control" accept="image/*">
+                            <div class="form-text">Upload one or more images. The first image will be the primary image.</div>
+                        </div>
+
+                        {% if form.instance.pk and form.instance.images.exists %}
+                            <div class="mb-4">
+                                <h5>Current Images</h5>
+                                <div class="row">
+                                    {% for image in form.instance.images.all %}
+                                        <div class="col-md-4 mb-3">
+                                            <div class="card">
+                                                <img src="{{ image.image.url }}" class="card-img-top" alt="Venue image">
+                                                <div class="card-body">
+                                                    <div class="form-check">
+                                                        <input type="radio" name="primary_image" value="{{ image.id }}" 
+                                                               class="form-check-input" 
+                                                               {% if image.is_primary %}checked{% endif %}>
+                                                        <label class="form-check-label">Set as primary</label>
+                                                    </div>
+                                                    <div class="mt-2">
+                                                        <input type="checkbox" name="delete_images" value="{{ image.id }}" 
+                                                               class="form-check-input">
+                                                        <label class="form-check-label text-danger">Delete</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'venues:vendor_dashboard' %}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save Venue</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add Bootstrap classes to form fields
+        document.querySelectorAll('input, select, textarea').forEach(function(element) {
+            if (element.type !== 'checkbox' && element.type !== 'radio' && element.type !== 'hidden') {
+                element.classList.add('form-control');
+            } else if (element.type === 'checkbox' || element.type === 'radio') {
+                element.classList.add('form-check-input');
+            }
+        });
+    });
+</script>
+
+<!-- Google Maps JavaScript -->
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places&callback=initMap" async defer></script>
+<script>
+    let map;
+    let marker;
+    
+    // Set default values for India if coordinates not provided
+    const defaultLat = {% if form.instance.latitude %}{{ form.instance.latitude }}{% else %}20.5937{% endif %};
+    const defaultLng = {% if form.instance.longitude %}{{ form.instance.longitude }}{% else %}78.9629{% endif %};
+    
+    function initMap() {
+        // Initialize the map
+        const initialLocation = { lat: parseFloat(defaultLat), lng: parseFloat(defaultLng) };
+        map = new google.maps.Map(document.getElementById("map"), {
+            center: initialLocation,
+            zoom: 13,
+        });
+        
+        // Create a marker for the location
+        marker = new google.maps.Marker({
+            position: initialLocation,
+            map: map,
+            draggable: true,
+            title: "Venue Location"
+        });
+        
+        // Update form fields when marker is dragged
+        google.maps.event.addListener(marker, 'dragend', function() {
+            const position = marker.getPosition();
+            document.getElementById('id_latitude').value = position.lat();
+            document.getElementById('id_longitude').value = position.lng();
+            
+            // Reverse geocode to get address
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ 'location': position }, function(results, status) {
+                if (status === 'OK') {
+                    if (results[0]) {
+                        document.getElementById('id_address').value = results[0].formatted_address;
+                    }
+                }
+            });
+        });
+        
+        // If we have coordinates from the form, set the marker and center the map
+        const latField = document.getElementById('id_latitude');
+        const lngField = document.getElementById('id_longitude');
+        
+        if (latField.value && lngField.value) {
+            const formLocation = { 
+                lat: parseFloat(latField.value), 
+                lng: parseFloat(lngField.value) 
+            };
+            map.setCenter(formLocation);
+            marker.setPosition(formLocation);
+        }
+        
+        // Set up the geocoding button
+        document.getElementById('geocode-btn').addEventListener('click', function() {
+            const address = document.getElementById('id_address').value;
+            if (address) {
+                const geocoder = new google.maps.Geocoder();
+                geocoder.geocode({ 'address': address }, function(results, status) {
+                    if (status === 'OK') {
+                        map.setCenter(results[0].geometry.location);
+                        marker.setPosition(results[0].geometry.location);
+                        
+                        // Update form fields
+                        document.getElementById('id_latitude').value = results[0].geometry.location.lat();
+                        document.getElementById('id_longitude').value = results[0].geometry.location.lng();
+                    } else {
+                        alert('Geocode was not successful for the following reason: ' + status);
+                    }
+                });
+            }
+        });
+        
+        // Set up the current location button
+        document.getElementById('current-location-btn').addEventListener('click', function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const currentLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    
+                    map.setCenter(currentLocation);
+                    marker.setPosition(currentLocation);
+                    
+                    // Update form fields
+                    document.getElementById('id_latitude').value = position.coords.latitude;
+                    document.getElementById('id_longitude').value = position.coords.longitude;
+                    
+                    // Reverse geocode to get address
+                    const geocoder = new google.maps.Geocoder();
+                    geocoder.geocode({ 'location': currentLocation }, function(results, status) {
+                        if (status === 'OK') {
+                            if (results[0]) {
+                                document.getElementById('id_address').value = results[0].formatted_address;
+                            }
+                        }
+                    });
+                }, function() {
+                    alert('Error: The Geolocation service failed.');
+                });
+            } else {
+                alert('Error: Your browser doesn\'t support geolocation.');
+            }
+        });
+    }
+</script>
+{% endblock %}

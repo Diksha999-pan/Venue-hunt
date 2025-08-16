@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Browse Venues - Venue Hunt{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/venues.css' %}">
+<style>
+    #venues-map {
+        height: 450px;
+        width: 100%;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: none;
+    }
+    .view-toggle {
+        margin-bottom: 20px;
+    }
+    .toggle-active {
+        background-color: #0d6efd;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="venue-listing-container">
+    <div class="container py-5">
+        <!-- Search and Filter Section -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <!-- Search Bar -->
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" name="search" placeholder="Search venues..." 
+                                   value="{{ request.GET.search }}">
+                        </div>
+                    </div>
+
+                    <!-- Event Type Filter -->
+                    <div class="col-md-3">
+                        <select class="form-select" name="event_type">
+                            <option value="">Event Type</option>
+                            <option value="party" {% if request.GET.event_type == 'party' %}selected{% endif %}>Party</option>
+                            <option value="meeting" {% if request.GET.event_type == 'meeting' %}selected{% endif %}>Business Meeting</option>
+                            <option value="wedding" {% if request.GET.event_type == 'wedding' %}selected{% endif %}>Wedding</option>
+                            <option value="corporate" {% if request.GET.event_type == 'corporate' %}selected{% endif %}>Corporate Event</option>
+                        </select>
+                    </div>
+
+                    <!-- Price Range Filter -->
+                    <div class="col-md-3">
+                        <select class="form-select" name="price_range">
+                            <option value="">Price Range</option>
+                            <option value="0-100">₹0 - ₹100</option>
+                            <option value="100-500">₹100 - ₹500</option>
+                            <option value="500-1000">₹500 - ₹1000</option>
+                            <option value="1000+">₹1000+</option>
+                        </select>
+                    </div>
+
+                    <!-- Capacity Filter -->
+                    <div class="col-md-2">
+                        <select class="form-select" name="capacity">
+                            <option value="">Capacity</option>
+                            <option value="1-50">1-50 people</option>
+                            <option value="51-100">51-100 people</option>
+                            <option value="101-200">101-200 people</option>
+                            <option value="201+">201+ people</option>
+                        </select>
+                    </div>
+
+                    <!-- Advanced Filters (Collapsible) -->
+                    <div class="col-12">
+                        <div class="collapse" id="advancedFilters">
+                            <div class="row g-3 mt-2">
+                                <!-- Location Filter -->
+                                <div class="col-md-3">
+                                    <input type="text" class="form-control" name="location" 
+                                           placeholder="Location" value="{{ request.GET.location }}">
+                                </div>
+
+                                <!-- Date Filter -->
+                                <div class="col-md-3">
+                                    <input type="date" class="form-control" name="date" 
+                                           value="{{ request.GET.date }}">
+                                </div>
+
+                                <!-- Rating Filter -->
+                                <div class="col-md-3">
+                                    <select class="form-select" name="rating">
+                                        <option value="">Minimum Rating</option>
+                                        <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                                        <option value="4">⭐⭐⭐⭐ (4+)</option>
+                                        <option value="3">⭐⭐⭐ (3+)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Amenities Filter -->
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="parking" 
+                                               id="parkingCheck" {% if request.GET.parking %}checked{% endif %}>
+                                        <label class="form-check-label" for="parkingCheck">Parking Available</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="wifi" 
+                                               id="wifiCheck" {% if request.GET.wifi %}checked{% endif %}>
+                                        <label class="form-check-label" for="wifiCheck">Wi-Fi Available</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Actions -->
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                        <button type="button" class="btn btn-link" data-bs-toggle="collapse" 
+                                data-bs-target="#advancedFilters">
+                            Advanced Filters
+                        </button>
+                        <a href="{% url 'venues:venue_list' %}" class="btn btn-outline-secondary">Clear Filters</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Venues Grid -->
+        <div id="venues-grid" class="row row-cols-1 row-cols-md-3 g-4">
+            {% for venue in venues %}
+            <div class="col">
+                <div class="card h-100 venue-card">
+                    {% if venue.images.exists %}
+                    <div class="venue-image-container">
+                        <div class="venue-slideshow" id="venue-slideshow-{{ venue.id }}">
+                            {% for image in venue.images.all %}
+                            <div class="venue-slide {% if forloop.first %}active{% endif %}">
+                                <img src="{{ image.image.url }}" class="card-img-top" alt="{{ venue.name }}">
+                            </div>
+                            {% endfor %}
+                            {% if venue.images.count > 1 %}
+                            <button class="slide-nav prev" data-venue="{{ venue.id }}" data-direction="-1">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <button class="slide-nav next" data-venue="{{ venue.id }}" data-direction="1">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                            <div class="slide-dots">
+                                {% for image in venue.images.all %}
+                                <span class="dot {% if forloop.first %}active{% endif %}" 
+                                      data-venue="{{ venue.id }}" 
+                                      data-index="{{ forloop.counter0 }}"></span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% if venue.average_rating %}
+                        <div class="venue-rating">
+                            <span><i class="fas fa-star text-warning"></i> {{ venue.average_rating|floatformat:1 }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ venue.name }}</h5>
+                        <p class="card-text text-muted mb-2">
+                            <i class="fas fa-map-marker-alt"></i> {{ venue.address }}
+                        </p>
+                        <p class="card-text venue-description">{{ venue.description|truncatewords:30 }}</p>
+                        <div class="venue-details">
+                            <div class="detail-item">
+                                <i class="fas fa-users"></i>
+                                <span>Up to {{ venue.capacity }} people</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-rupee-sign"></i>
+                                <span>₹{{ venue.price_per_hour }}/hour</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>{{ venue.get_supported_events_display }}</span>
+                            </div>
+                        </div>
+                        <div class="venue-amenities">
+                            {% if venue.has_parking %}
+                            <span class="amenity-badge"><i class="fas fa-parking"></i> Parking</span>
+                            {% endif %}
+                            {% if venue.has_wifi %}
+                            <span class="amenity-badge"><i class="fas fa-wifi"></i> Wi-Fi</span>
+                            {% endif %}
+                            {% if venue.has_sound_system %}
+                            <span class="amenity-badge"><i class="fas fa-music"></i> Sound</span>
+                            {% endif %}
+                            {% if venue.has_catering %}
+                            <span class="amenity-badge"><i class="fas fa-utensils"></i> Catering</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'venues:venue_detail' venue.pk %}" class="btn btn-outline-primary">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    No venues found matching your criteria.
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                </li>
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/venues.js' %}"></script>
+{% endblock %}

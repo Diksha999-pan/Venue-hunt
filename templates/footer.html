@@ -1,0 +1,65 @@
+{% load static %}
+
+<footer class="footer mt-auto py-4 bg-dark text-white">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-3 mb-md-0">
+                <h5 class="text-uppercase mb-3">Venue Hunt</h5>
+                <p class="mb-3">Find the perfect venue for your next event or list your venue for others to discover.</p>
+                <div class="social-icons">
+                    <a href="#" class="text-white me-2"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="text-white me-2"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-white me-2"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="text-white"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+            <div class="col-md-2 mb-3 mb-md-0">
+                <h5 class="text-uppercase mb-3">Explore</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><a href="{% url 'home' %}" class="text-white text-decoration-none">Home</a></li>
+                    <li class="mb-2"><a href="{% url 'venues:venue_list' %}" class="text-white text-decoration-none">Browse Venues</a></li>
+                    <li class="mb-2"><a href="#" class="text-white text-decoration-none">About Us</a></li>
+                    <li class="mb-2"><a href="#" class="text-white text-decoration-none">Contact</a></li>
+                </ul>
+            </div>
+            <div class="col-md-2 mb-3 mb-md-0">
+                <h5 class="text-uppercase mb-3">Account</h5>
+                <ul class="list-unstyled">
+                    {% if user.is_authenticated %}
+                        <li class="mb-2"><a href="{% url 'profile' %}" class="text-white text-decoration-none">My Profile</a></li>
+                        {% if user.user_type == 'organizer' %}
+                            <li class="mb-2"><a href="{% url 'bookings:my_bookings' %}" class="text-white text-decoration-none">My Bookings</a></li>
+                        {% elif user.user_type == 'vendor' %}
+                            <li class="mb-2"><a href="{% url 'venues:vendor_dashboard' %}" class="text-white text-decoration-none">Dashboard</a></li>
+                        {% endif %}
+                        <li class="mb-2"><a href="{% url 'logout' %}" class="text-white text-decoration-none">Logout</a></li>
+                    {% else %}
+                        <li class="mb-2"><a href="{% url 'login' %}" class="text-white text-decoration-none">Login</a></li>
+                        <li class="mb-2"><a href="{% url 'signup' %}" class="text-white text-decoration-none">Sign Up</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h5 class="text-uppercase mb-3">Newsletter</h5>
+                <p class="mb-3">Subscribe to our newsletter for the latest updates on new venues and special offers.</p>
+                <form class="d-flex">
+                    <input class="form-control me-2" type="email" placeholder="Your Email Address" required>
+                    <button class="btn btn-outline-light" type="submit">Subscribe</button>
+                </form>
+            </div>
+        </div>
+        <hr class="my-4">
+        <div class="row align-items-center">
+            <div class="col-md-6 text-center text-md-start">
+                <p class="mb-0">&copy; 2025 Venue Hunt. All rights reserved.</p>
+            </div>
+            <div class="col-md-6 text-center text-md-end">
+                <ul class="list-inline mb-0">
+                    <li class="list-inline-item"><a href="#" class="text-white text-decoration-none">Privacy Policy</a></li>
+                    <li class="list-inline-item"><a href="#" class="text-white text-decoration-none">Terms of Service</a></li>
+                    <li class="list-inline-item"><a href="#" class="text-white text-decoration-none">Help Center</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>

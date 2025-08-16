@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Welcome to Venue Hunt{% endblock %}
+
+{% block extra_css %}
+    <link href="{% static 'css/home.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Venue Slideshow -->
+    {% if featured_venues %}
+    <div class="venue-slideshow mb-5">
+        {% for venue in featured_venues %}
+            <div class="slide {% if forloop.first %}active{% endif %}" style="background-image: url('{{ venue.images.first.image.url }}');">
+                <div class="slide-content">
+                    <h2 class="slide-title">{{ venue.name }}</h2>
+                    <p class="slide-description">{{ venue.description|truncatewords:20 }}</p>
+                    <a href="{% url 'venues:venue_detail' venue.pk %}" class="btn btn-primary">View Details</a>
+                </div>
+            </div>
+        {% endfor %}
+        
+        <div class="slideshow-controls">
+            <button class="slide-control prev-slide">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="slide-control next-slide">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+        
+        <div class="slide-indicators">
+            {% for venue in featured_venues %}
+                <div class="slide-indicator {% if forloop.first %}active{% endif %}"></div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Hero Section -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-8 text-center">
+            <div class="bg-light p-5 rounded-3 shadow">
+                <h1 class="display-4 mb-4">Welcome to Venue Hunt</h1>
+                <p class="lead mb-4">Find the perfect venue for your next event</p>
+                {% if not user.is_authenticated %}
+                    <hr class="my-4">
+                    <p class="mb-4">Join us today to start booking venues or list your venue.</p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{% url 'login' %}" class="btn btn-primary btn-lg px-4">Login</a>
+                        <a href="{% url 'signup' %}" class="btn btn-success btn-lg px-4">Sign Up</a>
+                    </div>
+                {% else %}
+                    <hr class="my-4">
+                    {% if user.user_type == 'vendor' %}
+                        <p class="mb-4">Manage your venues and view booking requests.</p>
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="{% url 'venues:vendor_dashboard' %}" class="btn btn-primary btn-lg px-4">Manage Venues</a>
+                            <a href="{% url 'bookings:venue_bookings' %}" class="btn btn-info btn-lg px-4">View Bookings</a>
+                        </div>
+                    {% else %}
+                        <p class="mb-4">Start exploring venues for your next event!</p>
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="{% url 'venues:venue_list' %}" class="btn btn-primary btn-lg px-4">Browse Venues</a>
+                            <a href="{% url 'bookings:my_bookings' %}" class="btn btn-info btn-lg px-4">My Bookings</a>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Featured Venues Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="text-center mb-4">Featured Venues</h2>
+        </div>
+        {% if featured_venues %}
+            {% for venue in featured_venues %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        {% if venue.images.exists %}
+                            <img src="{{ venue.images.first.image.url }}" class="card-img-top" alt="{{ venue.name }}" style="height: 200px; object-fit: cover;">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ venue.name }}</h5>
+                            <p class="card-text">{{ venue.description|truncatewords:30 }}</p>
+                            <ul class="list-unstyled">
+                                <li><strong>Capacity:</strong> {{ venue.capacity }} people</li>
+                                <li><strong>Price:</strong> ₹{{ venue.price_per_hour }}/hour</li>
+                                <li><strong>Type:</strong> {{ venue.get_supported_events_display }}</li>
+                            </ul>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <a href="{% url 'venues:venue_detail' venue.pk %}" class="btn btn-primary w-100">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            <div class="col-12 text-center mt-4">
+                <a href="{% url 'venues:venue_list' %}" class="btn btn-outline-primary btn-lg">View All Venues</a>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    No venues available at the moment.
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- User Type Cards -->
+    {% if not user.is_authenticated %}
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h3>Event Organizers</h3>
+                    <p>Looking for the perfect venue? Sign up to:</p>
+                    <ul class="text-start">
+                        <li>Browse diverse venues</li>
+                        <li>Make instant bookings</li>
+                        <li>Track your events</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h3>Venue Owners</h3>
+                    <p>Want to list your venue? Sign up to:</p>
+                    <ul class="text-start">
+                        <li>List your venues</li>
+                        <li>Manage bookings</li>
+                        <li>Track performance</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/home.js' %}"></script>
+{% endblock %}

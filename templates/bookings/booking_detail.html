@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}Booking Details - Venue Hunt{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Booking Details</h3>
+                </div>
+                <div class="card-body">
+                    <div class="venue-summary mb-4">
+                        <div class="row">
+                            {% if booking.venue.images.exists %}
+                            <div class="col-md-4">
+                                <img src="{{ booking.venue.images.first.image.url }}" 
+                                     class="img-fluid rounded" 
+                                     alt="{{ booking.venue.name }}">
+                            </div>
+                            {% endif %}
+                            <div class="col-md-8">
+                                <h4>{{ booking.venue.name }}</h4>
+                                <p class="text-muted">{{ booking.venue.address }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="booking-details">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Event Details</h5>
+                                <ul class="list-unstyled">
+                                    <li><strong>Date:</strong> {{ booking.event_date }}</li>
+                                    <li><strong>Time:</strong> {{ booking.start_time }} - {{ booking.end_time }}</li>
+                                    <li><strong>Event Type:</strong> {{ booking.get_event_type_display }}</li>
+                                    <li><strong>Number of Guests:</strong> {{ booking.number_of_guests }}</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Booking Status</h5>
+                                <div class="mb-3">
+                                    <span class="badge {% if booking.status == 'confirmed' %}bg-success
+                                                   {% elif booking.status == 'pending' %}bg-warning
+                                                   {% else %}bg-danger{% endif %}">
+                                        {{ booking.get_status_display }}
+                                    </span>
+                                </div>
+                                {% if booking.status == 'pending' %}
+                                    <p class="text-muted">Your booking request is being reviewed by the venue owner.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if booking.payment_status == 'paid' %}
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <h5>Payment Information</h5>
+                                <ul class="list-unstyled">
+                                    <li><strong>Amount Paid:</strong> ₹{{ booking.amount_paid }}</li>
+                                    <li><strong>Payment Status:</strong> 
+                                        <span class="badge bg-success">{{ booking.get_payment_status_display }}</span>
+                                    </li>
+                                    <li><strong>Order ID:</strong> {{ booking.payment_id }}</li>
+                                    {% if booking.transaction_id %}
+                                    <li><strong>Transaction ID:</strong> {{ booking.transaction_id }}</li>
+                                    {% endif %}
+                                    <li><strong>Payment Date:</strong> {{ booking.updated_at|date:"F d, Y" }}</li>
+                                </ul>
+                                <div class="mt-3">
+                                    <a href="{% url 'bookings:download_receipt' booking.pk %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-download"></i> Download Receipt
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if booking.special_requests %}
+                        <div class="mt-4">
+                            <h5>Special Requests</h5>
+                            <p>{{ booking.special_requests }}</p>
+                        </div>
+                        {% endif %}
+
+                        <div class="mt-4 pt-4 border-top">
+                            <h5>Contact Information</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Venue Owner</h6>
+                                    <p>{{ booking.venue.owner.get_full_name }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Event Organizer</h6>
+                                    <p>{{ booking.organizer.get_full_name }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if booking.status == 'confirmed' and booking.payment_status == 'paid' and booking.event_date < today %}
+                        <div class="mt-4 pt-4 border-top">
+                            <h5>Review</h5>
+                            {% if review %}
+                                <div class="review-container">
+                                    <div class="stars mb-2">
+                                        {% for i in '12345'|make_list %}
+                                            {% if forloop.counter <= review.rating %}
+                                                <i class="fas fa-star text-warning"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-muted"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                        <span class="ms-2">{{ review.rating }} / 5</span>
+                                    </div>
+                                    <div class="review-content mb-3">
+                                        {{ review.comment }}
+                                    </div>
+                                    <div class="review-meta text-muted small">
+                                        <span>{{ review.created_at|date:"F d, Y" }}</span>
+                                    </div>
+                                    <div class="review-actions mt-2">
+                                        <a href="{% url 'reviews:edit_review' review.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i> Edit Review
+                                        </a>
+                                        <a href="{% url 'reviews:delete_review' review.id %}" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i> Delete Review
+                                        </a>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <p>You haven't reviewed this venue yet.</p>
+                                <a href="{% url 'reviews:add_review' booking.id %}" class="btn btn-primary">
+                                    <i class="fas fa-star"></i> Write a Review
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    <div class="mt-4 text-center">
+                        <a href="{% url 'venues:venue_detail' booking.venue.pk %}" class="btn btn-secondary">Back to Venue</a>
+                        {% if booking.status != 'cancelled' %}
+                            <a href="{% url 'bookings:cancel_booking' booking.pk %}" class="btn btn-danger" 
+                               onclick="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.')">
+                                Cancel Booking
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

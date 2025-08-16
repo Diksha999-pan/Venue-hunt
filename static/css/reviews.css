@@ -1,0 +1,158 @@
+.review-container {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.stars {
+    font-size: 1.2rem;
+}
+
+.stars .fas.fa-star {
+    color: #ffc107;
+}
+
+.stars .far.fa-star {
+    color: #e2e2e2;
+}
+
+.review-form .rating-stars {
+    font-size: 2rem;
+    cursor: pointer;
+}
+
+.review-form .rating-stars i {
+    margin-right: 5px;
+}
+
+.review-form .rating-stars i:hover ~ i {
+    color: #e2e2e2;
+}
+
+.review-form .rating-stars:hover i {
+    color: #ffc107;
+}
+
+.review-form .rating-container {
+    display: inline-block;
+}
+
+.review-form #rating-value {
+    display: none;
+}
+
+.review-item {
+    position: relative;
+}
+
+.review-actions {
+    margin-top: 10px;
+}
+
+/* Rating summary */
+.rating-summary {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.rating-summary .overall-rating {
+    font-size: 48px;
+    font-weight: bold;
+    margin-right: 20px;
+}
+
+.rating-summary .star-breakdown {
+    flex-grow: 1;
+}
+
+.rating-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.rating-bar .stars {
+    width: 80px;
+}
+
+.rating-bar .progress {
+    flex-grow: 1;
+    height: 8px;
+}
+
+.rating-bar .count {
+    width: 40px;
+    text-align: right;
+    margin-left: 10px;
+    font-size: 12px;
+    color: #777;
+}
+
+/* Dashboard review styles */
+.dashboard-card {
+    transition: transform 0.2s ease-in-out;
+    border-radius: 10px;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+}
+
+.card-number {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: #0d6efd;
+    margin: 0;
+}
+
+.review-card {
+    background-color: #fff;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.review-card:hover {
+    background-color: #f8f9fa;
+}
+
+.text-warning .fas.fa-star {
+    color: #ffc107;
+}
+
+.text-warning .far.fa-star {
+    color: #dee2e6;
+}
+
+.review-card .text-warning {
+    font-size: 1rem;
+}
+
+.dashboard-card .text-warning {
+    font-size: 1.25rem;
+}
+
+/* Filter styles */
+.form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Pagination styles */
+.pagination .page-link {
+    color: #0d6efd;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+}
+
+.pagination .page-link:hover {
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+    color: #0d6efd;
+}

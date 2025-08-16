@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Review - Venue Hunt{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">Delete Review</h4>
+                </div>
+                <div class="card-body">
+                    <p class="mb-4">Are you sure you want to delete your review for <strong>{{ review.venue.name }}</strong>?</p>
+                    
+                    <div class="alert alert-warning">
+                        <p class="mb-0"><strong>Rating:</strong> {{ review.rating }} / 5</p>
+                        <p class="mb-0"><strong>Review:</strong> {{ review.comment }}</p>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'bookings:booking_detail' review.booking.pk %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Delete Review
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

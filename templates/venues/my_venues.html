@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Venues - Venue Hunt{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <button class="sidebar-toggle" aria-label="Toggle Sidebar">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <div class="sidebar-content">
+            <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_tab == 'overview' %}active{% endif %}" href="{% url 'venues:vendor_dashboard' %}">
+                                <i class="fas fa-home"></i> <span>Overview</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_tab == 'venues' %}active{% endif %}" href="{% url 'venues:my_venues' %}">
+                                <i class="fas fa-building"></i> <span>My Venues</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_tab == 'bookings' %}active{% endif %}" href="{% url 'bookings:venue_bookings' %}">
+                                <i class="fas fa-calendar-alt"></i> <span>Bookings</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_tab == 'reviews' %}active{% endif %}" href="#">
+                                <i class="fas fa-star"></i> <span>Reviews</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_tab == 'analytics' %}active{% endif %}" href="{% url 'venues:analytics' %}">
+                                <i class="fas fa-chart-bar"></i> <span>Analytics</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <div class="content-header">
+                    <h1 class="h2">My Venues</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <a href="{% url 'venues:venue_add' %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add New Venue
+                        </a>
+                    </div>
+                </div>
+
+                {% if messages %}
+                <div class="messages mb-4">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="card">
+                    <div class="card-body">
+                        {% if venues %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Venue Name</th>
+                                            <th>Capacity</th>
+                                            <th>Price/Hour</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for venue in venues %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if venue.images.exists %}
+                                                        <img src="{{ venue.images.first.image.url }}" 
+                                                             class="rounded me-2" style="width: 50px; height: 50px; object-fit: cover;" 
+                                                             alt="{{ venue.name }}">
+                                                    {% endif %}
+                                                    {{ venue.name }}
+                                                </div>
+                                            </td>
+                                            <td>{{ venue.capacity }}</td>
+                                            <td>₹{{ venue.price_per_hour }}</td>
+                                            <td>
+                                                <span class="badge bg-success">Active</span>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'venues:venue_detail' venue.pk %}" 
+                                                   class="btn btn-sm btn-info me-1">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'venues:venue_edit' venue.pk %}" 
+                                                   class="btn btn-sm btn-primary me-1">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'venues:venue_delete' venue.pk %}" 
+                                                   class="btn btn-sm btn-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Pagination -->
+                            {% if is_paginated %}
+                            <nav aria-label="Page navigation" class="mt-4">
+                                <ul class="pagination justify-content-center">
+                                    {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1" aria-label="First">
+                                            <span aria-hidden="true">&laquo;&laquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                            
+                                    {% for num in page_obj.paginator.page_range %}
+                                        {% if num == page_obj.number %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                            
+                                    {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                                            <span aria-hidden="true">&raquo;&raquo;</span>
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                            {% endif %}
+                        {% else %}
+                            <div class="text-center py-5">
+                                <div class="mb-3">
+                                    <i class="fas fa-building fa-4x text-muted"></i>
+                                </div>
+                                <h4>No Venues Yet</h4>
+                                <p class="text-muted">You haven't added any venues yet.</p>
+                                <a href="{% url 'venues:venue_add' %}" class="btn btn-primary mt-3">Add Your First Venue</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sidebar toggle functionality
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarToggle = document.querySelector('.sidebar-toggle');
+    const mainContent = document.querySelector('.main-content');
+    const toggleIcon = sidebarToggle.querySelector('i');
+    
+    // Load sidebar state from localStorage
+    const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (sidebarCollapsed) {
+        sidebar.classList.add('collapsed');
+        mainContent.classList.add('collapsed');
+        sidebarToggle.classList.add('collapsed');
+        toggleIcon.classList.remove('fa-chevron-left');
+        toggleIcon.classList.add('fa-chevron-right');
+    }
+
+    sidebarToggle.addEventListener('click', function() {
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('collapsed');
+        sidebarToggle.classList.toggle('collapsed');
+        
+        // Toggle the chevron icon
+        if (sidebar.classList.contains('collapsed')) {
+            toggleIcon.classList.remove('fa-chevron-left');
+            toggleIcon.classList.add('fa-chevron-right');
+        } else {
+            toggleIcon.classList.remove('fa-chevron-right');
+            toggleIcon.classList.add('fa-chevron-left');
+        }
+        
+        // Save state to localStorage
+        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+    });
+});
+</script>
+{% endblock %}

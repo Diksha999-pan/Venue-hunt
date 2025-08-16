@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load form_tags %}
+
+{% block title %}My Profile - Venue Hunt{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+<style>
+    .profile-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .profile-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .profile-picture-container {
+        position: relative;
+        width: 150px;
+        height: 150px;
+        margin: 0 auto 1rem;
+    }
+    .profile-picture-large {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #fff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .profile-picture-edit {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        background-color: #fff;
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        cursor: pointer;
+    }
+    .profile-tabs .nav-link {
+        color: #495057;
+    }
+    .profile-tabs .nav-link.active {
+        background-color: #f8f9fa;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="profile-container">
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <div class="profile-header">
+                    <div class="profile-picture-container">
+                        <img src="{{ user.get_profile_picture_url }}" alt="{{ user.get_full_name }}" class="profile-picture-large">
+                        <label for="id_profile_picture" class="profile-picture-edit" title="Change Profile Picture">
+                            <i class="fas fa-camera"></i>
+                        </label>
+                    </div>
+                    <h2>{{ user.get_full_name }}</h2>
+                    <p class="text-muted mb-0">{{ user.get_user_type_display }}</p>
+                </div>
+
+                <ul class="nav nav-tabs profile-tabs mb-4" id="profileTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="true">Profile Details</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab" aria-controls="security" aria-selected="false">Security</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="profileTabsContent">
+                    <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="row mb-3" style="display: none;">
+                                <div class="col-md-12">
+                                    {{ form.profile_picture }}
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="id_first_name" class="form-label">First Name</label>
+                                    {{ form.first_name.errors }}
+                                    {{ form.first_name|add_class:"form-control" }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_last_name" class="form-label">Last Name</label>
+                                    {{ form.last_name.errors }}
+                                    {{ form.last_name|add_class:"form-control" }}
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="id_email" class="form-label">Email Address</label>
+                                    {{ form.email.errors }}
+                                    {{ form.email|add_class:"form-control" }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="id_phone_number" class="form-label">Phone Number</label>
+                                    {{ form.phone_number.errors }}
+                                    {{ form.phone_number|add_class:"form-control" }}
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="id_address" class="form-label">Address</label>
+                                    {{ form.address.errors }}
+                                    {{ form.address|add_class:"form-control" }}
+                                </div>
+                            </div>
+                            
+                            {% if form.user_type_display %}
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="id_user_type_display" class="form-label">Account Type</label>
+                                    {{ form.user_type_display|add_class:"form-control" }}
+                                    <small class="text-muted">Account type cannot be changed</small>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i> Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> Password management is currently not available in this view.
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="#" class="btn btn-outline-primary">
+                                <i class="fas fa-key me-1"></i> Change Password
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if user.user_type == 'organizer' %}
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">My Bookings</h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'bookings:my_bookings' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-calendar-check me-1"></i> View My Bookings
+                </a>
+            </div>
+        </div>
+        {% elif user.user_type == 'vendor' %}
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">My Venues</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2 d-md-flex">
+                    <a href="{% url 'venues:my_venues' %}" class="btn btn-outline-primary me-md-2">
+                        <i class="fas fa-building me-1"></i> View My Venues
+                    </a>
+                    <a href="{% url 'bookings:venue_bookings' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-calendar-alt me-1"></i> View Bookings
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle profile picture upload when clicking the edit icon
+        const profilePicInput = document.getElementById('id_profile_picture');
+        const profilePicEdit = document.querySelector('.profile-picture-edit');
+        const profilePicDisplay = document.querySelector('.profile-picture-large');
+        
+        if (profilePicEdit && profilePicInput) {
+            profilePicEdit.addEventListener('click', function() {
+                profilePicInput.click();
+            });
+            
+            profilePicInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        profilePicDisplay.src = e.target.result;
+                    };
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

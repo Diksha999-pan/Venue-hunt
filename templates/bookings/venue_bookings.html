@@ -1,0 +1,169 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+{% load booking_tags %}
+
+{% block title %}Venue Bookings - Venue Hunt{% endblock %}
+
+{% block dashboard_title %}Venue Bookings{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+{% endblock %}
+
+{% block dashboard_content %}
+{% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <!-- Filter by Venue -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label for="venue-filter" class="form-label">Filter by Venue</label>
+                            <select name="venue" id="venue-filter" class="form-select">
+                                <option value="">All Venues</option>
+                                {% for venue in venues %}
+                                <option value="{{ venue.id }}" {% if request.GET.venue == venue.id|stringformat:"i" %}selected{% endif %}>
+                                    {{ venue.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="status-filter" class="form-label">Filter by Status</label>
+                            <select name="status" id="status-filter" class="form-select">
+                                <option value="">All Statuses</option>
+                                {% for status_code, status_name in booking_status_choices %}
+                                <option value="{{ status_code }}" {% if request.GET.status == status_code %}selected{% endif %}>
+                                    {{ status_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-body">
+                    {% if bookings %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Venue</th>
+                                    <th>Customer</th>
+                                    <th>Event Date</th>
+                                    <th>Time</th>
+                                    <th>Guests</th>
+                                    <th>Status</th>
+                                    <th>Payment</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in bookings %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'venues:venue_detail' booking.venue.id %}">
+                                            {{ booking.venue.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ booking.organizer.get_full_name }}</td>
+                                    <td>{{ booking.event_date }}</td>
+                                    <td>{{ booking.start_time }} - {{ booking.end_time }}</td>
+                                    <td>{{ booking.number_of_guests }}</td>
+                                    <td>
+                                        <span class="badge {% if booking.status == 'pending' %}bg-warning
+                                                         {% elif booking.status == 'confirmed' %}bg-success
+                                                         {% else %}bg-danger{% endif %}">
+                                            {{ booking.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if booking.payment_status == 'pending' %}bg-warning
+                                                         {% elif booking.payment_status == 'paid' %}bg-success
+                                                         {% else %}bg-danger{% endif %}">
+                                            {{ booking.get_payment_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'bookings:booking_detail' booking.id %}" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if booking.status == 'pending' %}
+                                            <a href="{% url 'bookings:update_booking_status' booking.id 'confirmed' %}" 
+                                               class="btn btn-sm btn-success" 
+                                               onclick="return confirm('Are you sure you want to confirm this booking?')">
+                                                <i class="fas fa-check"></i>
+                                            </a>
+                                            {% endif %}
+                                            
+                                            {% if booking.status != 'cancelled' %}
+                                                {% with days_until_event=booking.event_date|timeuntil|split:" " %}
+                                                {% if days_until_event > 3 %}
+                                                <a href="{% url 'bookings:cancel_booking' booking.id %}" 
+                                                   class="btn btn-sm btn-danger" 
+                                                   onclick="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.')">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                                {% else %}
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-danger" 
+                                                        disabled 
+                                                        title="Cannot cancel bookings less than 3 days before the event">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                                {% endif %}
+                                                {% endwith %}
+                                            {% endif %}
+                                            {% if booking.payment_status == 'paid' %}
+                                            <a href="{% url 'bookings:download_receipt' booking.id %}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="mb-3">
+                            <i class="fas fa-calendar-alt fa-4x text-muted"></i>
+                        </div>
+                        <h4>No Bookings Yet</h4>
+                        <p class="text-muted">Your venues haven't received any bookings yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+{% endblock dashboard_content %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-submit form when filters change
+        document.getElementById('venue-filter').addEventListener('change', function() {
+            this.form.submit();
+        });
+        document.getElementById('status-filter').addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+</script>
+{% endblock %}

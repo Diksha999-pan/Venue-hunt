@@ -1,0 +1,238 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Vendor Dashboard - Venue Hunt{% endblock %}
+
+{% block dashboard_title %}Vendor Dashboard{% endblock %}
+
+{% block dashboard_content %}
+                <!-- Add Venue Button -->
+                <div class="mb-4">
+                    <a href="{% url 'venues:venue_add' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Venue
+                    </a>
+                </div>
+
+                <!-- Overview Section -->
+                <div class="row">
+                    <div class="col-md-3 mb-4">
+                        <div class="card h-100 dashboard-card">
+                            <div class="card-body">
+                                <h5 class="card-title text-primary">Active Venues</h5>
+                                <h2 class="card-number">{{ venues_count }}</h2>
+                                <p class="card-text"><small class="text-muted">Total listed venues</small></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <div class="card h-100 dashboard-card">
+                            <div class="card-body">
+                                <h5 class="card-title text-success">Pending Bookings</h5>
+                                <h2 class="card-number">{{ pending_bookings_count }}</h2>
+                                <p class="card-text"><small class="text-muted">Awaiting confirmation</small></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <div class="card h-100 dashboard-card">
+                            <div class="card-body">
+                                <h5 class="card-title text-info">Total Bookings</h5>
+                                <h2 class="card-number">{{ total_bookings_count }}</h2>
+                                <p class="card-text"><small class="text-muted">All time bookings</small></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <div class="card h-100 dashboard-card">
+                            <div class="card-body">
+                                <h5 class="card-title text-warning">Average Rating</h5>
+                                <h2 class="card-number">{{ average_rating|floatformat:1 }} ⭐</h2>
+                                <p class="card-text"><small class="text-muted">From {{ total_reviews }} reviews</small></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- My Venues -->
+                <div class="card mt-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">My Venues</h5>
+                        <a href="{% url 'venues:my_venues' %}" class="btn btn-sm btn-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        {% if venues %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Venue Name</th>
+                                            <th>Capacity</th>
+                                            <th>Price/Hour</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for venue in venues %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if venue.images.exists %}
+                                                        <img src="{{ venue.images.filter.first.image.url }}" 
+                                                             class="rounded me-2" style="width: 50px; height: 50px; object-fit: cover;" 
+                                                             alt="{{ venue.name }}">
+                                                    {% endif %}
+                                                    {{ venue.name }}
+                                                </div>
+                                            </td>
+                                            <td>{{ venue.capacity }}</td>
+                                            <td>₹{{ venue.price_per_hour }}</td>
+                                            <td>
+                                                <span class="badge bg-success">Active</span>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'venues:venue_detail' venue.pk %}" 
+                                                   class="btn btn-sm btn-info me-1">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'venues:venue_edit' venue.pk %}" 
+                                                   class="btn btn-sm btn-primary me-1">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'venues:venue_delete' venue.pk %}" 
+                                                   class="btn btn-sm btn-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-center">You haven't added any venues yet. 
+                                <a href="{% url 'venues:venue_add' %}">Add your first venue</a>
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Recent Bookings -->
+                <div class="card mt-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Recent Bookings</h5>
+                        <a href="{% url 'bookings:venue_bookings' %}" class="btn btn-sm btn-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Venue</th>
+                                        <th>Customer</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in recent_bookings %}
+                                    <tr>
+                                        <td>{{ booking.venue.name }}</td>
+                                        <td>{{ booking.organizer.get_full_name }}</td>
+                                        <td>{{ booking.event_date }}</td>
+                                        <td>
+                                            <span class="badge {% if booking.status == 'pending' %}bg-warning
+                                                             {% elif booking.status == 'confirmed' %}bg-success
+                                                             {% else %}bg-danger{% endif %}">
+                                                {{ booking.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if booking.status == 'pending' %}
+                                                <button class="btn btn-sm btn-success me-1 confirm-booking" 
+                                                        data-booking-id="{{ booking.id }}">
+                                                    Confirm
+                                                </button>
+                                                <button class="btn btn-sm btn-danger cancel-booking" 
+                                                        data-booking-id="{{ booking.id }}">
+                                                    Cancel
+                                                </button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center">No recent bookings</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Latest Reviews -->
+                <div class="card mt-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Latest Reviews</h5>
+                        <a href="#" class="btn btn-sm btn-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for review in latest_reviews %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <h6>{{ review.venue.name }}</h6>
+                                            <small class="text-muted">{{ review.created_at|date }}</small>
+                                        </div>
+                                        <div class="mb-2">
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= review.rating %}
+                                                    ⭐
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        <p class="card-text">{{ review.comment }}</p>
+                                        <small class="text-muted">- {{ review.reviewer.get_full_name }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="col-12">
+                                <p class="text-center">No reviews yet</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+{% endblock dashboard_content %}
+
+{% block dashboard_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // Handle confirm booking
+    document.querySelectorAll('.confirm-booking').forEach(button => {
+        button.addEventListener('click', function() {
+            const bookingId = this.dataset.bookingId;
+            if (confirm('Are you sure you want to confirm this booking?')) {
+                // Add AJAX call to confirm booking
+            }
+        });
+    });
+
+    // Handle cancel booking
+    document.querySelectorAll('.cancel-booking').forEach(button => {
+        button.addEventListener('click', function() {
+            const bookingId = this.dataset.bookingId;
+            if (confirm('Are you sure you want to cancel this booking?')) {
+                // Add AJAX call to cancel booking
+            }
+        });
+    });
+});
+</script>
+{% endblock dashboard_js %}

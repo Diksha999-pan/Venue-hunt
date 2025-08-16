@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment - Venue Hunt{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+<style>
+    .payment-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .booking-details {
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 4px;
+    }
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+    .amount {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="payment-container">
+    <h2 class="text-center mb-4">Complete Your Payment</h2>
+    
+    <div class="booking-details">
+        <h5 class="mb-3">Booking Details</h5>
+        <div class="detail-row">
+            <span>Venue:</span>
+            <span>{{ venue.name }}</span>
+        </div>
+        <div class="detail-row">
+            <span>Date:</span>
+            <span>{{ booking.event_date }}</span>
+        </div>
+        <div class="detail-row">
+            <span>Time:</span>
+            <span>{{ booking.start_time }} - {{ booking.end_time }}</span>
+        </div>
+        <div class="detail-row">
+            <span>Event Type:</span>
+            <span>{{ booking.get_event_type_display }}</span>
+        </div>
+        <div class="detail-row">
+            <span>Number of Guests:</span>
+            <span>{{ booking.number_of_guests }}</span>
+        </div>
+        <div class="detail-row">
+            <span>Amount to Pay:</span>
+            <span class="amount">₹{{ booking.amount_paid }}</span>
+        </div>
+    </div>
+
+    <div class="text-center">
+        <button id="razorpay-button" class="btn btn-primary btn-lg">Pay Now</button>
+    </div>
+
+    <div class="text-center mt-3">
+        <small class="text-muted">You will be redirected to Razorpay's secure payment gateway</small>
+    </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    document.getElementById('razorpay-button').onclick = function(e) {
+        e.preventDefault();
+        var options = {
+            "key": "{{ razorpay_merchant_key }}",
+            "amount": "{{ amount }}",
+            "currency": "{{ currency }}",
+            "name": "{{ venue.name }}",
+            "description": "Venue Booking Payment",
+            "order_id": "{{ razorpay_order_id }}",
+            "handler": function (response) {
+                // Create a form to submit payment details
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = "{{ callback_url }}";
+
+                // Add CSRF token
+                var csrfToken = document.createElement('input');
+                csrfToken.type = 'hidden';
+                csrfToken.name = 'csrfmiddlewaretoken';
+                csrfToken.value = '{{ csrf_token }}';
+                form.appendChild(csrfToken);
+
+                // Add payment details
+                var fields = {
+                    'razorpay_payment_id': response.razorpay_payment_id,
+                    'razorpay_order_id': response.razorpay_order_id,
+                    'razorpay_signature': response.razorpay_signature
+                };
+
+                for (var key in fields) {
+                    var input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = fields[key];
+                    form.appendChild(input);
+                }
+
+                document.body.appendChild(form);
+                form.submit();
+            },
+            "prefill": {
+                "name": "{{ request.user.get_full_name }}",
+                "email": "{{ request.user.email }}"
+            },
+            "theme": {
+                "color": "#28a745"
+            }
+        };
+        var rzp1 = new Razorpay(options);
+        rzp1.open();
+    };
+</script>
+{% endblock %}

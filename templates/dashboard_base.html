@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <button class="sidebar-toggle" aria-label="Toggle Sidebar">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <div class="sidebar-content">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link {% if active_tab == 'overview' %}active{% endif %}" href="{% url 'venues:vendor_dashboard' %}">
+                        <i class="fas fa-home"></i> <span>Overview</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_tab == 'venues' %}active{% endif %}" href="{% url 'venues:my_venues' %}">
+                        <i class="fas fa-building"></i> <span>My Venues</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_tab == 'bookings' %}active{% endif %}" href="{% url 'bookings:venue_bookings' %}">
+                        <i class="fas fa-calendar-alt"></i> <span>Bookings</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_tab == 'reviews' %}active{% endif %}" href="{% url 'reviews:venue_reviews' %}">
+                        <i class="fas fa-star"></i> <span>Reviews</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_tab == 'analytics' %}active{% endif %}" href="{% url 'venues:analytics' %}">
+                        <i class="fas fa-chart-bar"></i> <span>Analytics</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="content-header">
+            <h1 class="h2">{% block dashboard_title %}{% endblock %}</h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                {% block dashboard_actions %}{% endblock %}
+            </div>
+        </div>
+
+        {% block dashboard_content %}{% endblock %}
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sidebar toggle functionality
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarToggle = document.querySelector('.sidebar-toggle');
+    const mainContent = document.querySelector('.main-content');
+    const toggleIcon = sidebarToggle.querySelector('i');
+    
+    // Load sidebar state from localStorage
+    const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (sidebarCollapsed) {
+        sidebar.classList.add('collapsed');
+        mainContent.classList.add('collapsed');
+        sidebarToggle.classList.add('collapsed');
+        toggleIcon.classList.remove('fa-chevron-left');
+        toggleIcon.classList.add('fa-chevron-right');
+    }
+
+    sidebarToggle.addEventListener('click', function() {
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('collapsed');
+        sidebarToggle.classList.toggle('collapsed');
+        
+        // Toggle the chevron icon
+        if (sidebar.classList.contains('collapsed')) {
+            toggleIcon.classList.remove('fa-chevron-left');
+            toggleIcon.classList.add('fa-chevron-right');
+        } else {
+            toggleIcon.classList.remove('fa-chevron-right');
+            toggleIcon.classList.add('fa-chevron-left');
+        }
+        
+        // Save state to localStorage
+        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+    });
+});
+</script>
+{% endblock %}
+
+{% block dashboard_js %}{% endblock %}

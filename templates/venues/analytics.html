@@ -1,0 +1,456 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Analytics - Venue Hunt{% endblock %}
+
+{% block dashboard_title %}Analytics Dashboard{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+.chart-container {
+    position: relative;
+    height: 250px;
+    width: 100%;
+}
+
+.card-body canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+{% if not has_venues %}
+    <div class="text-center py-5">
+        <div class="mb-3">
+            <i class="fas fa-chart-line fa-4x text-muted"></i>
+        </div>
+        <h4>No Venues Added Yet</h4>
+        <p class="text-muted">Add your first venue to start seeing analytics.</p>
+        <a href="{% url 'venues:venue_add' %}" class="btn btn-primary mt-3">
+            <i class="fas fa-plus"></i> Add Venue
+        </a>
+    </div>
+{% else %}
+    <!-- Key Metrics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-4">
+            <div class="card h-100 dashboard-card">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Total Venues</h5>
+                    <h2 class="card-number">{{ venues_count }}</h2>
+                    <p class="card-text"><small class="text-muted">Active venues</small></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card h-100 dashboard-card">
+                <div class="card-body">
+                    <h5 class="card-title text-success">Total Revenue</h5>
+                    <h2 class="card-number">₹{{ total_revenue|floatformat:2 }}</h2>
+                    <p class="card-text"><small class="text-muted">From paid bookings</small></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card h-100 dashboard-card">
+                <div class="card-body">
+                    <h5 class="card-title text-info">Total Bookings</h5>
+                    <h2 class="card-number">{{ total_bookings }}</h2>
+                    <p class="card-text"><small class="text-muted">All time bookings</small></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card h-100 dashboard-card">
+                <div class="card-body">
+                    <h5 class="card-title text-warning">Booking Success Rate</h5>
+                    <h2 class="card-number">{{ booking_success_rate|floatformat:0 }}%</h2>
+                    <p class="card-text"><small class="text-muted">Confirmed bookings</small></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if has_bookings %}
+    <!-- Booking Status Distribution -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Booking Status Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="bookingStatusChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Monthly Booking Trend</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="bookingTrendChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <div class="mb-3">
+            <i class="fas fa-chart-bar fa-4x text-muted"></i>
+        </div>
+        <h4>No Bookings Yet</h4>
+        <p class="text-muted">Analytics will be available once you receive bookings.</p>
+    </div>
+    {% endif %}
+{% endif %}
+
+                <!-- Venue Performance -->
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Bookings by Venue</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="venueBookingsChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Revenue by Venue</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="venueRevenueChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Popular Event Types & Recent Trend -->
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Popular Event Types</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="eventTypesChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Recent 30 Days Trend</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="recentTrendChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+{% endblock dashboard_content %}
+
+{% block dashboard_js %}
+<!-- Load Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% if has_bookings %}
+<!-- Add debugging data -->
+{{ bookings_by_status|json_script:"debug-status-data" }}
+{{ bookings_by_month|json_script:"debug-monthly-data" }}
+{{ bookings_by_venue|json_script:"debug-venue-data" }}
+{{ revenue_by_venue|json_script:"debug-revenue-data" }}
+{{ popular_events|json_script:"debug-events-data" }}
+{{ daily_bookings|json_script:"debug-daily-data" }}
+<script>
+// Debug output - Check the data being passed to charts
+console.log('Debug data:');
+try {
+    console.log('Booking status data:', JSON.parse(document.getElementById('debug-status-data').textContent));
+    console.log('Monthly booking data:', JSON.parse(document.getElementById('debug-monthly-data').textContent));
+    console.log('Bookings by venue:', JSON.parse(document.getElementById('debug-venue-data').textContent));
+    console.log('Revenue by venue:', JSON.parse(document.getElementById('debug-revenue-data').textContent));
+    console.log('Popular events:', JSON.parse(document.getElementById('debug-events-data').textContent));
+    console.log('Daily bookings:', JSON.parse(document.getElementById('debug-daily-data').textContent));
+} catch (e) {
+    console.error('Error parsing debug data:', e);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default Chart.js colors
+    const colors = [
+        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+        '#5a5c69', '#858796', '#3498db', '#e67e22', '#9b59b6'
+    ];
+
+    // Booking Status Distribution Chart
+    const statusCtx = document.getElementById('bookingStatusChart').getContext('2d');
+    const statusData = JSON.parse(document.getElementById('debug-status-data').textContent);
+    
+    // Map status names to display names
+    const statusLabels = {
+        'confirmed': 'Confirmed',
+        'pending': 'Pending',
+        'cancelled': 'Cancelled'
+    };
+    
+    // Create arrays for chart
+    const statusNames = statusData.map(item => statusLabels[item.status] || item.status);
+    const statusCounts = statusData.map(item => item.count);
+    const statusColors = ['#1cc88a', '#f6c23e', '#e74a3b'];
+    const statusHoverColors = ['#17a673', '#dda20a', '#be2617'];
+    
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: statusNames,
+            datasets: [{
+                data: statusCounts,
+                backgroundColor: statusColors.slice(0, statusCounts.length),
+                hoverBackgroundColor: statusHoverColors.slice(0, statusCounts.length),
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            cutout: '60%'
+        }
+    });
+
+    // Monthly Booking Trend Chart
+    const trendCtx = document.getElementById('bookingTrendChart').getContext('2d');
+    const monthlyData = JSON.parse(document.getElementById('debug-monthly-data').textContent);
+    
+    // Create arrays for chart
+    const monthLabels = monthlyData.map(item => item.month);
+    const monthCounts = monthlyData.map(item => item.count);
+    
+    new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: monthLabels,
+            datasets: [{
+                label: 'Bookings',
+                data: monthCounts,
+                lineTension: 0.3,
+                backgroundColor: "rgba(78, 115, 223, 0.05)",
+                borderColor: "rgba(78, 115, 223, 1)",
+                pointRadius: 3,
+                pointBackgroundColor: "rgba(78, 115, 223, 1)",
+                pointBorderColor: "rgba(78, 115, 223, 1)",
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+                pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+                pointHitRadius: 10,
+                pointBorderWidth: 2,
+                fill: true
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    precision: 0
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Bookings by Venue Chart
+    const venueBookingsCtx = document.getElementById('venueBookingsChart').getContext('2d');
+    const venueData = JSON.parse(document.getElementById('debug-venue-data').textContent);
+    
+    // Create arrays for chart
+    const venueNames = venueData.map(item => item.venue__name);
+    const venueCounts = venueData.map(item => item.count);
+    
+    new Chart(venueBookingsCtx, {
+        type: 'bar',
+        data: {
+            labels: venueNames,
+            datasets: [{
+                label: 'Bookings',
+                data: venueCounts,
+                backgroundColor: colors.slice(0, venueNames.length),
+                borderWidth: 1
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    precision: 0
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Revenue by Venue Chart
+    const venueRevenueCtx = document.getElementById('venueRevenueChart').getContext('2d');
+    const revenueData = JSON.parse(document.getElementById('debug-revenue-data').textContent);
+    
+    // Create arrays for chart
+    const revenueVenueNames = revenueData.map(item => item.venue__name);
+    const revenueTotals = revenueData.map(item => item.total);
+    
+    new Chart(venueRevenueCtx, {
+        type: 'bar',
+        data: {
+            labels: revenueVenueNames,
+            datasets: [{
+                label: 'Revenue (₹)',
+                data: revenueTotals,
+                backgroundColor: colors.slice(0, revenueVenueNames.length),
+                borderWidth: 1
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Popular Event Types Chart
+    const eventTypesCtx = document.getElementById('eventTypesChart').getContext('2d');
+    const eventsData = JSON.parse(document.getElementById('debug-events-data').textContent);
+    
+    // Create arrays for chart
+    const eventTypes = eventsData.map(item => item.event_type);
+    const eventCounts = eventsData.map(item => item.count);
+    
+    new Chart(eventTypesCtx, {
+        type: 'pie',
+        data: {
+            labels: eventTypes,
+            datasets: [{
+                data: eventCounts,
+                backgroundColor: colors.slice(0, eventTypes.length),
+                hoverBackgroundColor: colors.slice(0, eventTypes.length).map(color => color + 'cc'),
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Recent 30 Days Trend Chart
+    const recentTrendCtx = document.getElementById('recentTrendChart').getContext('2d');
+    const dailyData = JSON.parse(document.getElementById('debug-daily-data').textContent);
+    
+    // Create arrays for chart
+    const dayLabels = dailyData.map(item => item.day);
+    const dayCounts = dailyData.map(item => item.count);
+    
+    new Chart(recentTrendCtx, {
+        type: 'line',
+        data: {
+            labels: dayLabels,
+            datasets: [{
+                label: 'Bookings',
+                data: dayCounts,
+                lineTension: 0.3,
+                backgroundColor: "rgba(28, 200, 138, 0.05)",
+                borderColor: "rgba(28, 200, 138, 1)",
+                pointRadius: 3,
+                pointBackgroundColor: "rgba(28, 200, 138, 1)",
+                pointBorderColor: "rgba(28, 200, 138, 1)",
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: "rgba(28, 200, 138, 1)",
+                pointHoverBorderColor: "rgba(28, 200, 138, 1)",
+                pointHitRadius: 10,
+                pointBorderWidth: 2,
+                fill: true
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    precision: 0
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Sidebar toggle functionality
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarToggle = document.querySelector('.sidebar-toggle');
+    const mainContent = document.querySelector('.main-content');
+    const toggleIcon = sidebarToggle.querySelector('i');
+    
+    // Load sidebar state from localStorage
+    const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (sidebarCollapsed) {
+        sidebar.classList.add('collapsed');
+        mainContent.classList.add('collapsed');
+        sidebarToggle.classList.add('collapsed');
+        toggleIcon.classList.remove('fa-chevron-left');
+        toggleIcon.classList.add('fa-chevron-right');
+    }
+
+    sidebarToggle.addEventListener('click', function() {
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('collapsed');
+        sidebarToggle.classList.toggle('collapsed');
+        
+        // Toggle the chevron icon
+        if (sidebar.classList.contains('collapsed')) {
+            toggleIcon.classList.remove('fa-chevron-left');
+            toggleIcon.classList.add('fa-chevron-right');
+        } else {
+            toggleIcon.classList.remove('fa-chevron-right');
+            toggleIcon.classList.add('fa-chevron-left');
+        }
+        
+        // Save state to localStorage
+        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+    });
+});
+</script>
+{% endif %}
+{% endblock dashboard_js %}

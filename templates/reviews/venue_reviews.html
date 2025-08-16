@@ -1,0 +1,174 @@
+{% extends 'dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Venue Reviews - Venue Hunt{% endblock %}
+
+{% block dashboard_title %}Venue Reviews{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+{% endblock %}
+
+{% block dashboard_content %}
+    <!-- Venue Stats Cards -->
+    <div class="row mb-4">
+        {% for stat in venue_stats %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 dashboard-card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ stat.venue.name }}</h5>
+                    <div class="d-flex align-items-baseline mb-2">
+                        <h2 class="card-number me-2">{{ stat.avg_rating|floatformat:1 }}</h2>
+                        <div class="text-warning h4 mb-0">
+                            {% with ''|center:5 as range %}
+                            {% for _ in range %}
+                                {% if forloop.counter <= stat.avg_rating|floatformat:0|add:"0" %}
+                                    <i class="fas fa-star"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    <p class="card-text"><small class="text-muted">From {{ stat.total_reviews }} reviews</small></p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-5">
+                    <label for="venue-filter" class="form-label">Filter by Venue</label>
+                    <select name="venue" id="venue-filter" class="form-select">
+                        <option value="">All Venues</option>
+                        {% for venue in venues %}
+                        <option value="{{ venue.id }}" {% if selected_venue == venue.id|stringformat:"i" %}selected{% endif %}>
+                            {{ venue.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label for="rating-filter" class="form-label">Filter by Rating</label>
+                    <select name="rating" id="rating-filter" class="form-select">
+                        <option value="">All Ratings</option>
+                        {% for i in "54321"|make_list %}
+                        <option value="{{ i }}" {% if selected_rating == i %}selected{% endif %}>
+                            {{ i }} Star{% if i != "1" %}s{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reviews List -->
+    {% if reviews %}
+    <div class="card">
+        <div class="card-body">
+            {% for review in reviews %}
+            <div class="review-card mb-4 {% if not forloop.last %}border-bottom pb-4{% endif %}">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="mb-1">{{ review.venue.name }}</h5>
+                        <p class="text-muted mb-0">
+                            <small>
+                                {{ review.reviewer.get_full_name }} • 
+                                {{ review.created_at|date:"F j, Y" }} •
+                                Event Type: {{ review.booking.get_event_type_display }}
+                            </small>
+                        </p>
+                    </div>
+                    <div class="text-warning">
+                        {% with ''|center:5 as range %}
+                        {% for _ in range %}
+                            {% if forloop.counter <= review.rating %}
+                                <i class="fas fa-star"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                        {% endwith %}
+                    </div>
+                </div>
+                <p class="mb-0">{{ review.comment }}</p>
+            </div>
+            {% endfor %}
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav aria-label="Reviews pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if selected_venue %}&venue={{ selected_venue }}{% endif %}{% if selected_rating %}&rating={{ selected_rating }}{% endif %}" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if selected_venue %}&venue={{ selected_venue }}{% endif %}{% if selected_rating %}&rating={{ selected_rating }}{% endif %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if selected_venue %}&venue={{ selected_venue }}{% endif %}{% if selected_rating %}&rating={{ selected_rating }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if selected_venue %}&venue={{ selected_venue }}{% endif %}{% if selected_rating %}&rating={{ selected_rating }}{% endif %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if selected_venue %}&venue={{ selected_venue }}{% endif %}{% if selected_rating %}&rating={{ selected_rating }}{% endif %}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <div class="mb-3">
+            <i class="fas fa-star fa-4x text-muted"></i>
+        </div>
+        <h4>No Reviews Yet</h4>
+        <p class="text-muted">Reviews will appear here once customers start reviewing your venues.</p>
+    </div>
+    {% endif %}
+{% endblock dashboard_content %}
+
+{% block dashboard_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form when filters change
+    document.getElementById('venue-filter').addEventListener('change', function() {
+        this.form.submit();
+    });
+    document.getElementById('rating-filter').addEventListener('change', function() {
+        this.form.submit();
+    });
+});
+</script>
+{% endblock dashboard_js %}

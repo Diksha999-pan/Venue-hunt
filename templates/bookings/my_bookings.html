@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Bookings - Venue Hunt{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>My Bookings</h1>
+                <a href="{% url 'venues:venue_list' %}" class="btn btn-primary">Book New Venue</a>
+            </div>
+            
+            {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div class="card">
+                <div class="card-body">
+                    {% if bookings %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Venue</th>
+                                    <th>Event Date</th>
+                                    <th>Time</th>
+                                    <th>Event Type</th>
+                                    <th>Status</th>
+                                    <th>Payment</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in bookings %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'venues:venue_detail' booking.venue.id %}">
+                                            {{ booking.venue.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ booking.event_date }}</td>
+                                    <td>{{ booking.start_time }} - {{ booking.end_time }}</td>
+                                    <td>{{ booking.get_event_type_display }}</td>
+                                    <td>
+                                        <span class="badge {% if booking.status == 'pending' %}bg-warning
+                                                         {% elif booking.status == 'confirmed' %}bg-success
+                                                         {% else %}bg-danger{% endif %}">
+                                            {{ booking.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if booking.payment_status == 'pending' %}bg-warning
+                                                         {% elif booking.payment_status == 'paid' %}bg-success
+                                                         {% else %}bg-danger{% endif %}">
+                                            {{ booking.get_payment_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'bookings:booking_detail' booking.id %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i> Details
+                                        </a>
+                                        {% if booking.payment_status == 'paid' %}
+                                        <a href="{% url 'bookings:download_receipt' booking.id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-download"></i> Receipt
+                                        </a>
+                                        {% endif %}
+                                        {% if booking.status != 'cancelled' %}
+                                        <a href="{% url 'bookings:cancel_booking' booking.id %}" class="btn btn-sm btn-danger"
+                                           onclick="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.')">
+                                            <i class="fas fa-times"></i> Cancel
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="mb-3">
+                            <i class="fas fa-calendar-alt fa-4x text-muted"></i>
+                        </div>
+                        <h4>No Bookings Yet</h4>
+                        <p class="text-muted">You haven't made any bookings yet.</p>
+                        <a href="{% url 'venues:venue_list' %}" class="btn btn-primary mt-3">Browse Venues</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

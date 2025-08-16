@@ -1,0 +1,93 @@
+.auth-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #6B73FF 0%, #000DFF 100%);
+    padding: 40px 0;
+}
+
+.auth-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.auth-title {
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 30px;
+}
+
+.auth-card .form-control {
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+}
+
+.auth-card .form-control:focus {
+    box-shadow: 0 0 0 3px rgba(107, 115, 255, 0.2);
+    border-color: #6B73FF;
+}
+
+.auth-btn {
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: #6B73FF;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.auth-btn:hover {
+    background: #000DFF;
+    transform: translateY(-2px);
+}
+
+.auth-separator {
+    margin: 20px 0;
+    text-align: center;
+    position: relative;
+}
+
+.auth-separator::before,
+.auth-separator::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 45%;
+    height: 1px;
+    background: #ddd;
+}
+
+.auth-separator::before { left: 0; }
+.auth-separator::after { right: 0; }
+
+.user-type-selector {
+    margin-bottom: 20px;
+}
+
+.user-type-selector .btn {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #ddd;
+    background: white;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.user-type-selector .btn.active {
+    border-color: #6B73FF;
+    background: rgba(107, 115, 255, 0.1);
+    color: #6B73FF;
+}
+
+.profile-image-preview {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 10px auto;
+    display: block;
+}
