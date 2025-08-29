@@ -25,12 +25,31 @@ class Booking(models.Model):
     payment_id = models.CharField(max_length=100, blank=True, null=True)  # Order ID
     transaction_id = models.CharField(max_length=100, blank=True, null=True)  # Payment ID
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)  # Total booking amount
+    is_advance_payment = models.BooleanField(default=False)  # True if only advance payment (20%)
     
+    # Event categories
+    EVENT_CATEGORY_CHOICES = (
+        ('formal', 'Formal'),
+        ('informal', 'Informal'),
+    )
+    event_category = models.CharField(max_length=10, choices=EVENT_CATEGORY_CHOICES, default='informal')
+    
+    # Event types
     EVENT_TYPE_CHOICES = (
-        ('party', 'Party'),
-        ('meeting', 'Business Meeting'),
+        # Formal Events
+        ('conference', 'Conference'),
+        ('business_meeting', 'Business Meeting'),
+        ('product_launch', 'Product Launch'),
+        ('seminar_workshop', 'Seminar & Workshop'),
+        ('award_ceremony', 'Award Ceremony'),
+        # Informal Events
+        ('birthday_party', 'Birthday Party'),
+        ('casual_gathering', 'Casual Get Together'),
         ('wedding', 'Wedding'),
-        ('corporate', 'Corporate Event'),
+        ('engagement', 'Engagement'),
+        ('games_night', 'Games Night'),
+        ('anniversary', 'Anniversary'),
         ('other', 'Other'),
     )
     event_type = models.CharField(max_length=20, choices=EVENT_TYPE_CHOICES)

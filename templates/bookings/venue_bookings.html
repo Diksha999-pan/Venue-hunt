@@ -2,7 +2,9 @@
 {% load static %}
 {% load booking_tags %}
 
-{% block title %}Venue Bookings - Venue Hunt{% endblock %}
+{% block title %}Venue Bookings - Venue Hunt{% endblo                                            <a href="{% url 'bookings:download_receipt' booking.id %}" class="btn btn-sm btn-primary" data-no-loader="true">
+                                                <i class="fas fa-download"></i> Receipt
+                                            </a>%}
 
 {% block dashboard_title %}Venue Bookings{% endblock %}
 
@@ -112,7 +114,8 @@
                                             {% endif %}
                                             
                                             {% if booking.status != 'cancelled' %}
-                                                {% with days_until_event=booking.event_date|timeuntil|split:" " %}
+                                                {% load booking_tags %}
+                                                {% with days_until_event=booking.event_date|days_until %}
                                                 {% if days_until_event > 3 %}
                                                 <a href="{% url 'bookings:cancel_booking' booking.id %}" 
                                                    class="btn btn-sm btn-danger" 
@@ -123,7 +126,7 @@
                                                 <button type="button" 
                                                         class="btn btn-sm btn-danger" 
                                                         disabled 
-                                                        title="Cannot cancel bookings less than 3 days before the event">
+                                                        title="Venue owners cannot cancel bookings within 3 days of the event date">
                                                     <i class="fas fa-times"></i>
                                                 </button>
                                                 {% endif %}

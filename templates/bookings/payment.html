@@ -1,10 +1,64 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load booking_tags %}
 
 {% block title %}Payment - Venue Hunt{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+<link rel="stylesheet" href="{% stat            // Add better error handling
+            "modal": {
+                "escape": false,
+                "ondismiss": function() {
+                    // When modal is dismissed (user closes the payment window)
+                    console.log("Payment modal dismissed by user");
+                    window.location.href = "{% url 'bookings:booking_detail' booking.pk %}";
+                }
+            },
+            "retry": {
+                "enabled": true,
+                "max_count": 3
+            },
+            "notes": {
+                "booking_id": "{{ booking.pk }}",
+                "venue_name": "{{ venue.name }}",
+                "event_date": "{{ booking.event_date }}"
+            },
+            "config": {
+                "display": {
+                    "blocks": {
+                        "banks": {
+                            "name": "Pay using Bank",
+                            "instruments": [
+                                { "method": "netbanking" },
+                                { "method": "card" },
+                                { "method": "upi" }
+                            ]
+                        }
+                    },
+                    "sequence": ["block.banks"],
+                    "preferences": {
+                        "show_default_blocks": true
+                    }
+                }
+            },
+            // Handle payment failures
+            "callbacks": {
+                "on_payment_failed": function(response) {
+                    console.log("Payment failed with error:", response.error);
+                    console.log("Error code:", response.error.code);
+                    console.log("Error description:", response.error.description);
+                    
+                    // Create a form to submit error details
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = "{{ callback_url }}";
+
+                    // Add CSRF token
+                    var csrfToken = document.createElement('input');
+                    csrfToken.type = 'hidden';
+                    csrfToken.name = 'csrfmiddlewaretoken';
+                    csrfToken.value = '{{ csrf_token }}';
+                    form.appendChild(csrfToken);auth.css' %}">
 <style>
     .payment-container {
         max-width: 600px;
@@ -40,6 +94,24 @@
 
 {% block content %}
 <div class="payment-container">
+    {% if is_retry %}
+    <div class="alert alert-warning mb-4">
+        <h4 class="alert-heading">Retry Payment</h4>
+        <p>Your previous payment attempt was unsuccessful. Please try again.</p>
+    </div>
+    {% endif %}
+    
+    {% if payment_description and "Capped" in payment_description %}
+    <div class="alert alert-info mb-4">
+        <h4 class="alert-heading">Payment Amount Adjusted</h4>
+        <p>Due to payment processor limits in test mode, your payment has been automatically adjusted to a partial payment of ₹40,000. 
+           The remaining amount can be paid at the venue.</p>
+        <hr>
+        <p class="mb-0"><strong>Note:</strong> In test mode, Razorpay has a lower payment limit. 
+           In production, the limit would be higher.</p>
+    </div>
+    {% endif %}
+    
     <h2 class="text-center mb-4">Complete Your Payment</h2>
     
     <div class="booking-details">
@@ -64,10 +136,42 @@
             <span>Number of Guests:</span>
             <span>{{ booking.number_of_guests }}</span>
         </div>
+        
+        {% if is_advance_payment %}
+        <div class="detail-row">
+            <span>Total Amount:</span>
+            <span>₹{{ total_amount|floatformat:2 }}</span>
+        </div>
+        <div class="detail-row">
+            <span>Payment Type:</span>
+            <span class="badge bg-info">{{ payment_description }}</span>
+        </div>
+        <div class="detail-row">
+            <span>Amount to Pay Now:</span>
+            <span class="amount">₹{{ booking.amount_paid|floatformat:2 }}</span>
+        </div>
+        <div class="detail-row">
+            <span>Remaining Amount:</span>
+            <span>₹{{ total_amount|subtract:booking.amount_paid|floatformat:2 }}</span>
+            <small class="text-muted d-block">To be paid at the venue</small>
+        </div>
+        {% else %}
+        <div class="detail-row">
+            <span>Payment Type:</span>
+            <span class="badge bg-success">{{ payment_description }}</span>
+        </div>
         <div class="detail-row">
             <span>Amount to Pay:</span>
-            <span class="amount">₹{{ booking.amount_paid }}</span>
+            <span class="amount">₹{{ booking.amount_paid|floatformat:2 }}</span>
         </div>
+        {% if booking.amount_paid < total_amount %}
+        <div class="detail-row">
+            <span>Remaining Amount:</span>
+            <span>₹{{ total_amount|subtract:booking.amount_paid|floatformat:2 }}</span>
+            <small class="text-muted d-block">To be paid at the venue</small>
+        </div>
+        {% endif %}
+        {% endif %}
     </div>
 
     <div class="text-center">
@@ -83,14 +187,17 @@
 <script>
     document.getElementById('razorpay-button').onclick = function(e) {
         e.preventDefault();
+        console.log("Payment process initiated");
+        
         var options = {
             "key": "{{ razorpay_merchant_key }}",
             "amount": "{{ amount }}",
             "currency": "{{ currency }}",
             "name": "{{ venue.name }}",
-            "description": "Venue Booking Payment",
+            "description": "{{ payment_description }}",
             "order_id": "{{ razorpay_order_id }}",
             "handler": function (response) {
+                console.log("Payment successful - creating form for submission");
                 // Create a form to submit payment details
                 var form = document.createElement('form');
                 form.method = 'POST';
@@ -109,6 +216,9 @@
                     'razorpay_order_id': response.razorpay_order_id,
                     'razorpay_signature': response.razorpay_signature
                 };
+                
+                console.log("Payment ID: " + response.razorpay_payment_id);
+                console.log("Order ID: " + response.razorpay_order_id);
 
                 for (var key in fields) {
                     var input = document.createElement('input');
@@ -127,9 +237,50 @@
             },
             "theme": {
                 "color": "#28a745"
+            },
+            // Add better error handling
+            "modal": {
+                "escape": false,
+                "ondismiss": function() {
+                    // When modal is dismissed (user closes the payment window)
+                    window.location.href = "{% url 'bookings:booking_detail' booking.pk %}";
+                }
             }
         };
         var rzp1 = new Razorpay(options);
+        rzp1.on('payment.failed', function(response){
+            // Log payment failure
+            console.error('Payment failed:', response.error);
+            
+            // Create a form to submit failure details
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = "{{ callback_url }}";
+
+            // Add CSRF token
+            var csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = 'csrfmiddlewaretoken';
+            csrfToken.value = '{{ csrf_token }}';
+            form.appendChild(csrfToken);
+
+            // Add error details
+            var errorDescription = document.createElement('input');
+            errorDescription.type = 'hidden';
+            errorDescription.name = 'error[description]';
+            errorDescription.value = response.error.description;
+            form.appendChild(errorDescription);
+
+            // Add order ID
+            var orderIdInput = document.createElement('input');
+            orderIdInput.type = 'hidden';
+            orderIdInput.name = 'razorpay_order_id';
+            orderIdInput.value = "{{ razorpay_order_id }}";
+            form.appendChild(orderIdInput);
+
+            document.body.appendChild(form);
+            form.submit();
+        });
         rzp1.open();
     };
 </script>

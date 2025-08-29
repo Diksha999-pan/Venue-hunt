@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load booking_tags %}
 
 {% block title %}Booking Details - Venue Hunt{% endblock %}
 
@@ -49,6 +50,11 @@
                                 </div>
                                 {% if booking.status == 'pending' %}
                                     <p class="text-muted">Your booking request is being reviewed by the venue owner.</p>
+                                    {% if booking.payment_status == 'pending' and request.user == booking.organizer %}
+                                        <a href="{% url 'bookings:retry_payment' booking.pk %}" class="btn btn-warning btn-sm">
+                                            <i class="fas fa-redo"></i> Retry Payment
+                                        </a>
+                                    {% endif %}
                                 {% endif %}
                             </div>
                         </div>
@@ -58,7 +64,43 @@
                             <div class="col-md-12">
                                 <h5>Payment Information</h5>
                                 <ul class="list-unstyled">
-                                    <li><strong>Amount Paid:</strong> ₹{{ booking.amount_paid }}</li>
+                                    {% if booking.is_advance_payment %}
+                                    <li>
+                                        <span class="badge bg-info">20% Advance Payment</span>
+                                    </li>
+                                    <li><strong>Amount Paid:</strong> ₹{{ booking.amount_paid|floatformat:2 }} 
+                                        <small class="text-muted">
+                                            {% if booking.amount_paid < booking.total_amount|multiply:0.2 %}
+                                                (Capped at ₹40,000 due to payment processor limits)
+                                            {% else %}
+                                                (20% of total)
+                                            {% endif %}
+                                        </small>
+                                    </li>
+                                    <li><strong>Total Amount:</strong> ₹{{ booking.total_amount|floatformat:2 }}</li>
+                                    <li><strong>Remaining Amount:</strong> ₹{{ booking.total_amount|subtract:booking.amount_paid|floatformat:2 }} 
+                                        <small class="text-muted">(to be paid at venue)</small>
+                                    </li>
+                                    {% else %}
+                                    <li>
+                                        {% if booking.amount_paid < booking.total_amount %}
+                                        <span class="badge bg-info">Partial Payment</span>
+                                        {% else %}
+                                        <span class="badge bg-success">Full Payment</span>
+                                        {% endif %}
+                                    </li>
+                                    <li><strong>Amount Paid:</strong> ₹{{ booking.amount_paid|floatformat:2 }}
+                                        {% if booking.amount_paid < booking.total_amount %}
+                                        <small class="text-muted">(Capped at ₹40,000 due to payment processor limits)</small>
+                                        {% endif %}
+                                    </li>
+                                    {% if booking.amount_paid < booking.total_amount %}
+                                    <li><strong>Total Amount:</strong> ₹{{ booking.total_amount|floatformat:2 }}</li>
+                                    <li><strong>Remaining Amount:</strong> ₹{{ booking.total_amount|subtract:booking.amount_paid|floatformat:2 }}
+                                        <small class="text-muted">(to be paid at venue)</small>
+                                    </li>
+                                    {% endif %}
+                                    {% endif %}
                                     <li><strong>Payment Status:</strong> 
                                         <span class="badge bg-success">{{ booking.get_payment_status_display }}</span>
                                     </li>
@@ -69,7 +111,7 @@
                                     <li><strong>Payment Date:</strong> {{ booking.updated_at|date:"F d, Y" }}</li>
                                 </ul>
                                 <div class="mt-3">
-                                    <a href="{% url 'bookings:download_receipt' booking.pk %}" class="btn btn-sm btn-primary">
+                                    <a href="{% url 'bookings:download_receipt' booking.pk %}" class="btn btn-sm btn-primary" data-no-loader="true">
                                         <i class="fas fa-download"></i> Download Receipt
                                     </a>
                                 </div>
@@ -141,10 +183,37 @@
                     <div class="mt-4 text-center">
                         <a href="{% url 'venues:venue_detail' booking.venue.pk %}" class="btn btn-secondary">Back to Venue</a>
                         {% if booking.status != 'cancelled' %}
-                            <a href="{% url 'bookings:cancel_booking' booking.pk %}" class="btn btn-danger" 
-                               onclick="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.')">
-                                Cancel Booking
-                            </a>
+                            {% load booking_tags %}
+                            {% with days_until_event=booking.event_date|days_until %}
+                                {% if request.user == booking.organizer and days_until_event <= 2 %}
+                                    <button class="btn btn-danger" disabled title="Bookings cannot be cancelled within 2 days of the event date">
+                                        Cancel Booking
+                                    </button>
+                                    <div class="mt-2 text-danger small">
+                                        <i class="fas fa-info-circle"></i> Bookings cannot be cancelled within 2 days of the event date.
+                                    </div>
+                                {% elif request.user == booking.venue.owner and days_until_event <= 3 %}
+                                    <button class="btn btn-danger" disabled title="Venue owners cannot cancel bookings within 3 days of the event date">
+                                        Cancel Booking
+                                    </button>
+                                    <div class="mt-2 text-danger small">
+                                        <i class="fas fa-info-circle"></i> Venue owners cannot cancel bookings within 3 days of the event date.
+                                    </div>
+                                {% else %}
+                                    <a href="{% url 'bookings:cancel_booking' booking.pk %}" class="btn btn-danger" 
+                                       onclick="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.')">
+                                        Cancel Booking
+                                    </a>
+                                    <div class="mt-2 text-muted small">
+                                        <i class="fas fa-info-circle"></i> 
+                                        {% if request.user == booking.organizer %}
+                                            Bookings can be cancelled up to 2 days before the event date.
+                                        {% else %}
+                                            Venue owners can cancel bookings up to 3 days before the event date.
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
                         {% endif %}
                     </div>
                 </div>

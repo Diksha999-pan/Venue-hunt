@@ -19,11 +19,19 @@ Venue Hunt is a comprehensive venue recommendation and booking system built with
 - Track venue performance and reviews
 - Analytics dashboard with booking statistics
 
+## Booking & Cancellation Policies
+
+- **Event Organizers**: Cannot cancel bookings within 2 days of the event date
+- **Venue Owners**: Cannot cancel bookings within 3 days of the event date
+- Full or 20% advance payment options available
+- Paid bookings receive downloadable receipts
+
 ## Technical Stack
 - Backend: Django
 - Frontend: HTML, CSS, JavaScript
 - Data Visualization: Chart.js
 - Database: SQLite (development)
+- Payments: Razorpay integration
 
 ## Setup
 

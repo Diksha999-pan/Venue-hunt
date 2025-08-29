@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Payment Receipt</title>
+    {% load booking_tags %}
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -141,9 +142,28 @@
             <div class="section-title">Payment Information</div>
             <table class="details">
                 <tr>
+                    <th>Total Amount</th>
+                    <td>₹{{ booking.total_amount }}</td>
+                </tr>
+                <tr>
                     <th>Amount Paid</th>
                     <td>₹{{ booking.amount_paid }}</td>
                 </tr>
+                {% if booking.total_amount > booking.amount_paid %}
+                <tr>
+                    <th>Remaining Amount</th>
+                    <td>₹{{ booking.total_amount|subtract:booking.amount_paid|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <th>Payment Type</th>
+                    <td>{% if booking.is_advance_payment %}20% Advance Payment{% else %}Partial Payment (Capped){% endif %}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <th>Payment Type</th>
+                    <td>Full Payment</td>
+                </tr>
+                {% endif %}
                 <tr>
                     <th>Payment Status</th>
                     <td><span class="status">{{ booking.get_payment_status_display }}</span></td>
@@ -170,7 +190,13 @@
         </div>
 
         <div class="total">
-            Total Amount: ₹{{ booking.amount_paid }}
+            {% if booking.total_amount > booking.amount_paid %}
+            <div>Total Amount: ₹{{ booking.total_amount|floatformat:2 }}</div>
+            <div>Amount Paid: ₹{{ booking.amount_paid|floatformat:2 }}</div>
+            <div>Remaining Balance: ₹{{ booking.total_amount|subtract:booking.amount_paid|floatformat:2 }}</div>
+            {% else %}
+            <div>Total Amount Paid: ₹{{ booking.amount_paid|floatformat:2 }}</div>
+            {% endif %}
         </div>
 
         <div class="footer">

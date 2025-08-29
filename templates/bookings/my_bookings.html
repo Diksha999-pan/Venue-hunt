@@ -73,15 +73,25 @@
                                             <i class="fas fa-eye"></i> Details
                                         </a>
                                         {% if booking.payment_status == 'paid' %}
-                                        <a href="{% url 'bookings:download_receipt' booking.id %}" class="btn btn-sm btn-primary">
+                                        <a href="{% url 'bookings:download_receipt' booking.id %}" class="btn btn-sm btn-primary" data-no-loader="true">
                                             <i class="fas fa-download"></i> Receipt
                                         </a>
                                         {% endif %}
                                         {% if booking.status != 'cancelled' %}
-                                        <a href="{% url 'bookings:cancel_booking' booking.id %}" class="btn btn-sm btn-danger"
-                                           onclick="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.')">
-                                            <i class="fas fa-times"></i> Cancel
-                                        </a>
+                                            {% load booking_tags %}
+                                            {% with days_until_event=booking.event_date|days_until %}
+                                                {% if days_until_event <= 2 %}
+                                                    <button class="btn btn-sm btn-danger" disabled 
+                                                            title="Bookings cannot be cancelled within 2 days of the event date">
+                                                        <i class="fas fa-times"></i> Cancel
+                                                    </button>
+                                                {% else %}
+                                                    <a href="{% url 'bookings:cancel_booking' booking.id %}" class="btn btn-sm btn-danger"
+                                                       onclick="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.')">
+                                                        <i class="fas fa-times"></i> Cancel
+                                                    </a>
+                                                {% endif %}
+                                            {% endwith %}
                                         {% endif %}
                                     </td>
                                 </tr>

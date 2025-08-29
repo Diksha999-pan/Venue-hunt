@@ -9,7 +9,7 @@ class Venue(models.Model):
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     capacity = models.PositiveIntegerField()
-    price_per_hour = models.DecimalField(max_digits=10, decimal_places=2)
+    price_per_person = models.DecimalField(max_digits=10, decimal_places=2)
     
     # Amenities
     has_parking = models.BooleanField(default=False)
@@ -17,12 +17,27 @@ class Venue(models.Model):
     has_sound_system = models.BooleanField(default=False)
     has_catering = models.BooleanField(default=False)
     
-    # Event types supported
+    # Event categories and types supported
+    EVENT_CATEGORY_CHOICES = (
+        ('formal', 'Formal'),
+        ('informal', 'Informal'),
+    )
+    event_category = models.CharField(max_length=10, choices=EVENT_CATEGORY_CHOICES, default='informal')
+    
     EVENT_TYPES = (
-        ('party', 'Party'),
-        ('meeting', 'Business Meeting'),
+        # Formal Events
+        ('conference', 'Conference'),
+        ('business_meeting', 'Business Meeting'),
+        ('product_launch', 'Product Launch'),
+        ('seminar_workshop', 'Seminar & Workshop'),
+        ('award_ceremony', 'Award Ceremony'),
+        # Informal Events
+        ('birthday_party', 'Birthday Party'),
+        ('casual_gathering', 'Casual Get Together'),
         ('wedding', 'Wedding'),
-        ('corporate', 'Corporate Event'),
+        ('engagement', 'Engagement'),
+        ('games_night', 'Games Night'),
+        ('anniversary', 'Anniversary'),
         ('other', 'Other'),
     )
     supported_events = models.CharField(max_length=20, choices=EVENT_TYPES, default='other')

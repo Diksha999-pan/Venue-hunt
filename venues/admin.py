@@ -12,7 +12,7 @@ class ReviewInline(admin.TabularInline):
 
 @admin.register(Venue)
 class VenueAdmin(admin.ModelAdmin):
-    list_display = ('name', 'owner', 'capacity', 'price_per_hour', 'supported_events', 'created_at')
+    list_display = ('name', 'owner', 'capacity', 'price_per_person', 'supported_events', 'created_at')
     list_filter = ('supported_events', 'has_parking', 'has_wifi', 'has_sound_system', 'has_catering')
     search_fields = ('name', 'description', 'address')
     inlines = [VenueImageInline, ReviewInline]

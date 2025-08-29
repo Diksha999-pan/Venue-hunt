@@ -20,6 +20,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from venues.views import home_page_venues
+from django.views.generic import TemplateView
 
 urlpatterns = [
     path('', home_page_venues, name='home'),
@@ -28,6 +29,9 @@ urlpatterns = [
     path('venues/', include('venues.urls', namespace='venues')),
     path('bookings/', include('bookings.urls', namespace='bookings')),
     path('reviews/', include('reviews.urls', namespace='reviews')),
+    path('api/', include([
+        path('recommendations/', include('recommendations.urls', namespace='recommendations')),
+    ])),
 ]
 
 if settings.DEBUG:

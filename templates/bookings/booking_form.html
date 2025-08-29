@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load booking_tags %}
 
 {% block title %}Book {{ venue.name }} - Venue Hunt{% endblock %}
 
@@ -24,7 +25,7 @@
                                 <h5>Venue Details</h5>
                                 <ul class="list-unstyled">
                                     <li><strong>Capacity:</strong> {{ venue.capacity }} people</li>
-                                    <li><strong>Price:</strong> ₹{{ venue.price_per_hour }}/hour</li>
+                                    <li><strong>Price:</strong> ₹{{ venue.price_per_person }}/person</li>
                                     <li><strong>Location:</strong> {{ venue.address }}</li>
                                 </ul>
                             </div>
@@ -97,6 +98,19 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
+                                <label for="{{ form.event_category.id_for_label }}" class="form-label">
+                                    Event Category
+                                </label>
+                                {{ form.event_category }}
+                                {% if form.event_category.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.event_category.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
                                 <label for="{{ form.event_type.id_for_label }}" class="form-label">
                                     Event Type
                                 </label>
@@ -124,6 +138,38 @@
                                 {% endif %}
                             </div>
                         </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="form-check">
+                                    {{ form.is_advance_payment }}
+                                    <label class="form-check-label" for="{{ form.is_advance_payment.id_for_label }}">
+                                        Pay 20% Advance Now (₹{{ venue.price_per_person|multiply:0.2|floatformat:2 }}/person)
+                                    </label>
+                                    {% if form.is_advance_payment.help_text %}
+                                        <div class="form-text">{{ form.is_advance_payment.help_text }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="mt-2 payment-info">
+                                    <div class="card">
+                                        <div class="card-body p-2">
+                                            <div id="fullPaymentInfo">
+                                                <p class="mb-0"><strong>Full Payment:</strong> Pay the entire amount now to secure your booking.</p>
+                                                <p class="mb-0 text-danger" id="fullPaymentWarning" style="display:none;">
+                                                    <small>Due to payment processor limits in test mode, payments exceeding ₹40,000 will be automatically capped at ₹40,000, with the remaining amount to be paid at the venue. To keep your payment simple, consider using the 20% advance payment option.</small>
+                                                </p>
+                                            </div>
+                                            <div id="advancePaymentInfo" style="display:none;">
+                                                <p class="mb-0"><strong>20% Advance Payment:</strong> Pay 20% now to secure your booking and the remaining 80% on the event date.</p>
+                                                <p class="mb-0 text-info" id="advancePaymentWarning" style="display:none;">
+                                                    <small>Note: If your 20% advance exceeds ₹40,000, the payment will be capped at ₹40,000 due to payment processor limits in test mode.</small>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <div class="mb-3">
                             <label for="{{ form.special_requests.id_for_label }}" class="form-label">
@@ -149,4 +195,139 @@
         </div>
     </div>
 </div>
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const eventCategorySelect = document.getElementById('{{ form.event_category.id_for_label }}');
+        const eventTypeSelect = document.getElementById('{{ form.event_type.id_for_label }}');
+        const advancePaymentCheckbox = document.getElementById('{{ form.is_advance_payment.id_for_label }}');
+        const fullPaymentInfo = document.getElementById('fullPaymentInfo');
+        const advancePaymentInfo = document.getElementById('advancePaymentInfo');
+        const fullPaymentWarning = document.getElementById('fullPaymentWarning');
+        const advancePaymentWarning = document.getElementById('advancePaymentWarning');
+        const numberOfGuestsInput = document.getElementById('{{ form.number_of_guests.id_for_label }}');
+        
+        // Check if the booking amount is large and show appropriate warnings
+        function checkLargeAmount() {
+            const numberOfGuests = parseInt(numberOfGuestsInput.value) || 0;
+            const pricePerPerson = parseFloat("{{ venue.price_per_person }}");
+            const totalAmount = numberOfGuests * pricePerPerson;
+            const advanceAmount = totalAmount * 0.2; // 20% of total
+            
+            // Show appropriate warnings based on payment option
+            if (totalAmount > 40000) {
+                fullPaymentWarning.style.display = 'block';
+            } else {
+                fullPaymentWarning.style.display = 'none';
+            }
+            
+            // Show warning for advance payment if it exceeds the limit
+            if (advanceAmount > 40000) {
+                advancePaymentWarning.style.display = 'block';
+            } else {
+                advancePaymentWarning.style.display = 'none';
+            }
+        }
+        
+        // Set up event listeners
+        numberOfGuestsInput.addEventListener('change', checkLargeAmount);
+        numberOfGuestsInput.addEventListener('input', checkLargeAmount);
+        
+        // Initial check
+        checkLargeAmount();
+        
+        // Payment option toggle
+        advancePaymentCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                fullPaymentInfo.style.display = 'none';
+                advancePaymentInfo.style.display = 'block';
+            } else {
+                fullPaymentInfo.style.display = 'block';
+                advancePaymentInfo.style.display = 'none';
+            }
+            checkLargeAmount(); // Re-check amount warning
+        });
+        
+        console.log('Event Category Select:', eventCategorySelect);
+        console.log('Event Type Select:', eventTypeSelect);
+        
+        // Store all original options
+        const allOptions = Array.from(eventTypeSelect.options);
+        console.log('All options:', allOptions);
+        
+        // Get venue supported events from data attribute
+        const venueSupportedEvents = "{{ venue.supported_events }}";
+        console.log('Venue supported events:', venueSupportedEvents);
+        
+        // Get venue event category
+        const venueEventCategory = "{{ venue.event_category }}";
+        console.log('Venue event category:', venueEventCategory);
+        
+        function filterEventTypes() {
+            const selectedCategory = eventCategorySelect.value;
+            console.log('Selected category:', selectedCategory);
+            
+            // Clear current options
+            eventTypeSelect.innerHTML = '';
+            
+            // Filter and add appropriate options
+            allOptions.forEach(option => {
+                // Skip the empty default option
+                if (!option.value) {
+                    eventTypeSelect.add(option.cloneNode(true));
+                    return;
+                }
+                
+                const optionCategory = option.getAttribute('data-category');
+                console.log(`Option: ${option.value}, Category: ${optionCategory}`);
+                
+                // Only show event types that match:
+                // 1. The selected event category
+                // 2. The venue's supported event type (or any if the venue supports 'other')
+                if ((!selectedCategory || optionCategory === selectedCategory) && 
+                    (venueSupportedEvents === 'other' || venueSupportedEvents === option.value)) {
+                    eventTypeSelect.add(option.cloneNode(true));
+                }
+            });
+        }
+        
+        // Add data-category attribute to each option based on category
+        function initializeOptions() {
+            const formalEvents = ['conference', 'business_meeting', 'product_launch', 'seminar_workshop', 'award_ceremony'];
+            const informalEvents = ['birthday_party', 'casual_gathering', 'wedding', 'engagement', 'games_night', 'anniversary', 'other'];
+            
+            console.log('Formal events:', formalEvents);
+            console.log('Informal events:', informalEvents);
+            
+            allOptions.forEach(option => {
+                console.log('Processing option:', option.value, option.text);
+                
+                if (formalEvents.includes(option.value)) {
+                    option.setAttribute('data-category', 'formal');
+                    console.log(`Set ${option.value} as formal`);
+                } else if (informalEvents.includes(option.value)) {
+                    option.setAttribute('data-category', 'informal');
+                    console.log(`Set ${option.value} as informal`);
+                } else if (option.value) {
+                    console.log(`Warning: Unrecognized event type: ${option.value}`);
+                }
+            });
+            
+            // Set the event category to match the venue's event category by default
+            if (venueEventCategory) {
+                eventCategorySelect.value = venueEventCategory;
+                console.log(`Set default event category to ${venueEventCategory}`);
+            }
+        }
+        
+        // Initialize and set up event listener
+        initializeOptions();
+        eventCategorySelect.addEventListener('change', filterEventTypes);
+        
+        // Initial filtering
+        filterEventTypes();
+    });
+</script>
+{% endblock %}
 {% endblock %}

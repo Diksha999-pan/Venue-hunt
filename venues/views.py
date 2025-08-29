@@ -30,22 +30,27 @@ class VenueListView(ListView):
                 Q(address__icontains=search_query)
             )
         
+        # Event category filter
+        event_category = self.request.GET.get('event_category')
+        if event_category:
+            queryset = queryset.filter(event_category=event_category)
+        
         # Event type filter
         event_type = self.request.GET.get('event_type')
         if event_type:
-            queryset = queryset.filter(supported_events__icontains=event_type)
+            queryset = queryset.filter(supported_events=event_type)
         
         # Price range filter
         price_range = self.request.GET.get('price_range')
         if price_range:
             if price_range == '0-100':
-                queryset = queryset.filter(price_per_hour__lte=100)
+                queryset = queryset.filter(price_per_person__lte=100)
             elif price_range == '100-500':
-                queryset = queryset.filter(price_per_hour__gt=100, price_per_hour__lte=500)
+                queryset = queryset.filter(price_per_person__gt=100, price_per_person__lte=500)
             elif price_range == '500-1000':
-                queryset = queryset.filter(price_per_hour__gt=500, price_per_hour__lte=1000)
+                queryset = queryset.filter(price_per_person__gt=500, price_per_person__lte=1000)
             elif price_range == '1000+':
-                queryset = queryset.filter(price_per_hour__gt=1000)
+                queryset = queryset.filter(price_per_person__gt=1000)
         
         # Capacity filter
         capacity = self.request.GET.get('capacity')

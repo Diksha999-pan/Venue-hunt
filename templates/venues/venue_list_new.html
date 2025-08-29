@@ -80,7 +80,7 @@
                         address: "{{ venue.address }}",
                         lat: {{ venue.latitude|stringformat:"f" }},
                         lng: {{ venue.longitude|stringformat:"f" }},
-                        price: {{ venue.price_per_hour }},
+                        price: {{ venue.price_per_person }},
                         url: "{% url 'venues:venue_detail' venue.pk %}"
                     };
                     
@@ -294,7 +294,7 @@
                             </div>
                             <div class="detail-item">
                                 <i class="fas fa-rupee-sign"></i>
-                                <span>₹{{ venue.price_per_hour }}/hour</span>
+                                <span>₹{{ venue.price_per_person }}/person</span>
                             </div>
                             <div class="detail-item">
                                 <i class="fas fa-calendar-alt"></i>

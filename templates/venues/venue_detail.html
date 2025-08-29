@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ venue.name }} - Venue Hunt{% endblock %}
 
@@ -9,6 +10,120 @@
         width: 100%;
         border-radius: 4px;
         margin-bottom: 1rem;
+    }
+
+    /* Professional event website color scheme */
+    :root {
+        --primary-color: #2c3e50;
+        --secondary-color: #34495e;
+        --accent-color: #e74c3c;
+        --light-bg: #f8f9fa;
+        --card-hover: #ffffff;
+    }
+
+    body {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        min-height: 100vh;
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        background-color: white;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .card:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
+    }
+
+    .similar-venues-container .card {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .similar-venues-container .card-title {
+        color: var(--primary-color);
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .similar-venues-container .card-body {
+        padding: 0.75rem;
+    }
+
+    .similar-venues-container .card-title {
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .similar-venues-container .card-text {
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .similar-venues-container .venue-details {
+        font-size: 0.8rem;
+    }
+
+    .similar-venues-container .btn {
+        font-size: 0.85rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .similar-venues-container .btn-outline-primary {
+        color: var(--accent-color);
+        border-color: var(--accent-color);
+    }
+
+    .similar-venues-container .btn-outline-primary:hover {
+        background-color: var(--accent-color);
+        color: white;
+    }
+
+    .venue-details i {
+        color: var(--secondary-color);
+    }
+
+    .badge.bg-primary {
+        background-color: var(--accent-color) !important;
+    }
+
+    .venue-rating {
+        font-size: 0.9rem;
+        padding: 0.25rem 0.5rem;
+        background-color: rgba(255, 193, 7, 0.1);
+        border-radius: 4px;
+        display: inline-block;
+    }
+
+    .card-img-top {
+        transition: transform 0.3s ease;
+    }
+
+    .card:hover .card-img-top {
+        transform: scale(1.05);
+    }
+
+    /* Section styling */
+    .section-title {
+        color: var(--primary-color);
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--accent-color);
+        display: inline-block;
+    }
+
+    /* Price and capacity badges */
+    .venue-details div {
+        background-color: rgba(44, 62, 80, 0.05);
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        margin-bottom: 0.25rem;
     }
 </style>
 {% endblock %}
@@ -80,10 +195,13 @@
                             <strong>Capacity:</strong> {{ venue.capacity }} people
                         </li>
                         <li class="list-group-item">
-                            <strong>Price:</strong> ₹{{ venue.price_per_hour }}/hour
+                            <strong>Price:</strong> ₹{{ venue.price_per_person }}/person
                         </li>
                         <li class="list-group-item">
                             <strong>Address:</strong> {{ venue.address }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Event Category:</strong> {{ venue.get_event_category_display }}
                         </li>
                         <li class="list-group-item">
                             <strong>Event Type:</strong> {{ venue.get_supported_events_display }}
@@ -228,10 +346,30 @@
             {% endif %}
         </div>
     </div>
+
+    <!-- Similar Venues Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="section-title">Similar Venues You May Like</h3>
+                    <div class="similar-venues-container">
+                        <div class="row" id="similarVenues">
+                            <!-- Similar venues will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
+<!-- Similar Venues JavaScript -->
+<script src="{% static 'js/similar-venues.js' %}"></script>
+
 <!-- Google Maps JavaScript -->
 {% if venue.latitude and venue.longitude %}
 <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap" async defer></script>
@@ -256,4 +394,80 @@
     }
 </script>
 {% endif %}
+
+<!-- Initialize Similar Venues -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing similar venues for venue ID:', {{ venue.id }});
+    try {
+        loadSimilarVenues({{ venue.id }});
+    } catch (error) {
+        console.error('Error loading similar venues:', error);
+        document.getElementById('similarVenues').innerHTML = 
+            '<div class="col-12"><div class="alert alert-danger">Error loading similar venues. Please try refreshing the page.</div></div>';
+    }
+});
+</script>
+
+<style>
+    .similar-venues-container {
+        overflow-x: auto;
+        padding: 1rem 0;
+    }
+
+    /* Square card styling */
+    .similar-venues-container .card {
+        aspect-ratio: 1;
+        display: flex;
+        flex-direction: column;
+        max-width: 220px;
+        margin: 0 auto;
+    }
+
+    .similar-venues-container .card-img-top {
+        height: 50% !important;
+        object-fit: cover;
+    }
+
+    .similar-venues-container .card-body {
+        height: 50%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .similar-venues-container .card-text {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .similar-venues-container .venue-details {
+        margin-top: auto;
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .venue-details i {
+        margin-right: 0.25rem;
+    }
+
+    /* Compact badges */
+    .similar-venues-container .badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    /* More compact spacing */
+    .similar-venues-container .venue-details div {
+        padding: 0.15rem 0.35rem;
+        margin-bottom: 0.15rem;
+    }
+
+    /* Ensure the button stays at the bottom */
+    .similar-venues-container .btn {
+        margin-top: auto;
+    }
+</style>
 {% endblock %}

@@ -5,7 +5,7 @@ class VenueForm(forms.ModelForm):
     class Meta:
         model = Venue
         fields = ['name', 'description', 'address', 'latitude', 'longitude', 
-                 'capacity', 'price_per_hour', 'supported_events', 
+                 'capacity', 'price_per_person', 'event_category', 'supported_events', 
                  'has_parking', 'has_wifi', 'has_sound_system', 'has_catering']
         widgets = {
             'description': forms.Textarea(attrs={'rows': 4}),
@@ -13,3 +13,7 @@ class VenueForm(forms.ModelForm):
             'latitude': forms.HiddenInput(),
             'longitude': forms.HiddenInput(),
         }
+    
+    # Add JavaScript to dynamically update supported_events options based on selected event_category
+    class Media:
+        js = ('js/venue_form.js',)

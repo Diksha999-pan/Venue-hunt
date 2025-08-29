@@ -142,9 +142,12 @@
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
-                                    <a class="dropdown-item text-danger" href="{% url 'logout' %}">
-                                        <i class="fas fa-sign-out-alt"></i> Logout
-                                    </a>
+                                    <form method="post" action="{% url 'logout' %}" class="d-inline" data-no-loader="true">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="fas fa-sign-out-alt"></i> Logout
+                                        </button>
+                                    </form>
                                 </li>
                             </ul>
                         </li>
@@ -225,6 +228,7 @@
         });
     });
     </script>
+    <script src="/static/js/download-handler.js"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -1,2 +1,10 @@
 django>=4.2.0
 Pillow>=9.0.0  # For image handling
+django-crispy-forms>=2.0  # For better form rendering
+crispy-bootstrap5>=0.7  # Bootstrap 5 template pack for crispy forms
+python-dotenv>=1.0.0  # For environment variables
+django-filter>=23.1  # For filtering in views
+django-storages>=1.13  # For file storage (optional for production)
+reportlab>=4.0.0  # For PDF generation (receipts)
+whitenoise>=6.4.0  # For serving static files in production
+gunicorn>=21.2.0  # For production deployment

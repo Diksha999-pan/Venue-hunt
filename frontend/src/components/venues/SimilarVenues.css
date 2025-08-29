@@ -1,0 +1,71 @@
+/* SimilarVenues.css */
+.similar-venues-section {
+    padding: 2rem 0;
+}
+
+.venue-card {
+    transition: transform 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.venue-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.venue-image {
+    height: 200px;
+    object-fit: cover;
+}
+
+.venue-description {
+    font-size: 0.9rem;
+    color: #6c757d;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.venue-details {
+    margin: 1rem 0;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.venue-amenities {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.amenity-badge {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 20px;
+    color: #6c757d;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.similarity-score {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background-color: rgba(13, 110, 253, 0.9);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}

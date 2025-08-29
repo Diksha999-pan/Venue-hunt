@@ -89,7 +89,7 @@
                             <p class="card-text">{{ venue.description|truncatewords:30 }}</p>
                             <ul class="list-unstyled">
                                 <li><strong>Capacity:</strong> {{ venue.capacity }} people</li>
-                                <li><strong>Price:</strong> ₹{{ venue.price_per_hour }}/hour</li>
+                                <li><strong>Price:</strong> ₹{{ venue.price_per_person }}/person</li>
                                 <li><strong>Type:</strong> {{ venue.get_supported_events_display }}</li>
                             </ul>
                         </div>
